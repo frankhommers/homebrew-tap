@@ -72,7 +72,7 @@ jobs:
         run: |
           CASK="${{ steps.params.outputs.cask }}"
           VERSION="${{ steps.params.outputs.version }}"
-          CASK_FILE="Casks/$CASK.rb"
+          CASK_FILE="casks/$CASK.rb"
 
           sed -i '' "s/version \".*\"/version \"$VERSION\"/" "$CASK_FILE"
 
@@ -98,7 +98,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add "Casks/${{ steps.params.outputs.cask }}.rb"
+          git add "casks/${{ steps.params.outputs.cask }}.rb"
           git diff --cached --quiet && echo "No changes" && exit 0
           git commit -m "chore: update ${{ steps.params.outputs.cask }} to v${{ steps.params.outputs.version }}"
           git push
