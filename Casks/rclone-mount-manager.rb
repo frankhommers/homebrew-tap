@@ -1,4 +1,4 @@
-cask "rclone-mount" do
+cask "rclone-mount-manager" do
   version "1.0.0"
 
   # TODO: Update SHA256 hashes when first release is published
