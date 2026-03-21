@@ -1,0 +1,104 @@
+name: Update Cask
+
+on:
+  repository_dispatch:
+    types: [update-cask]
+  workflow_dispatch:
+    inputs:
+      cask:
+        description: "Cask name (e.g. mcp-manager)"
+        required: true
+      version:
+        description: "Version without v prefix (e.g. 1.0.0)"
+        required: true
+      repo:
+        description: "GitHub repo (e.g. frankhommers/mcp-manager)"
+        required: true
+      dmg_prefix:
+        description: "DMG filename prefix (e.g. McpManager)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve inputs
+        id: params
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "repository_dispatch" ]]; then
+            echo "cask=${{ github.event.client_payload.cask }}" >> "$GITHUB_OUTPUT"
+            echo "version=${{ github.event.client_payload.version }}" >> "$GITHUB_OUTPUT"
+            echo "repo=${{ github.event.client_payload.repo }}" >> "$GITHUB_OUTPUT"
+            echo "dmg_prefix=${{ github.event.client_payload.dmg_prefix }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "cask=${{ inputs.cask }}" >> "$GITHUB_OUTPUT"
+            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+            echo "repo=${{ inputs.repo }}" >> "$GITHUB_OUTPUT"
+            echo "dmg_prefix=${{ inputs.dmg_prefix }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download DMGs and compute SHA256
+        shell: bash
+        run: |
+          VERSION="${{ steps.params.outputs.version }}"
+          REPO="${{ steps.params.outputs.repo }}"
+          PREFIX="${{ steps.params.outputs.dmg_prefix }}"
+
+          ARM_URL="https://github.com/$REPO/releases/download/v$VERSION/$PREFIX-v$VERSION-osx-arm64.dmg"
+          X64_URL="https://github.com/$REPO/releases/download/v$VERSION/$PREFIX-v$VERSION-osx-x64.dmg"
+
+          echo "Downloading arm64 DMG from $ARM_URL"
+          curl -sL "$ARM_URL" -o /tmp/arm64.dmg
+          ARM_SHA=$(shasum -a 256 /tmp/arm64.dmg | awk '{print $1}')
+
+          echo "Downloading x64 DMG from $X64_URL"
+          curl -sL "$X64_URL" -o /tmp/x64.dmg
+          X64_SHA=$(shasum -a 256 /tmp/x64.dmg | awk '{print $1}')
+
+          echo "ARM_SHA=$ARM_SHA" >> "$GITHUB_ENV"
+          echo "X64_SHA=$X64_SHA" >> "$GITHUB_ENV"
+          echo "arm64 sha256: $ARM_SHA"
+          echo "x64 sha256: $X64_SHA"
+
+      - name: Update cask file
+        shell: bash
+        run: |
+          CASK="${{ steps.params.outputs.cask }}"
+          VERSION="${{ steps.params.outputs.version }}"
+          CASK_FILE="Casks/$CASK.rb"
+
+          sed -i '' "s/version \".*\"/version \"$VERSION\"/" "$CASK_FILE"
+
+          awk -v arm="$ARM_SHA" -v x64="$X64_SHA" '
+            BEGIN { count = 0 }
+            /sha256/ {
+              count++
+              if (count == 1) {
+                sub(/sha256 .*/, "sha256 \"" arm "\"")
+              } else if (count == 2) {
+                sub(/sha256 .*/, "sha256 \"" x64 "\"")
+              }
+            }
+            { print }
+          ' "$CASK_FILE" > "$CASK_FILE.tmp"
+          mv "$CASK_FILE.tmp" "$CASK_FILE"
+
+          echo "Updated $CASK_FILE:"
+          cat "$CASK_FILE"
+
+      - name: Commit and push
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "Casks/${{ steps.params.outputs.cask }}.rb"
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "chore: update ${{ steps.params.outputs.cask }} to v${{ steps.params.outputs.version }}"
+          git push
