@@ -1,13 +1,13 @@
 cask "mcp-manager" do
-  version "1.0.0"
+  version "1.1.0"
 
   on_arm do
-    sha256 "e39eb08375cc5ae8df55d9e5dd1a81689f1dfa93b581e43229dde1c6552d4b93"
+    sha256 "072c81452681fe6a28339bac4cf8642d817efcd6dfc19cc63e7e560017181af8"
     url "https://github.com/frankhommers/mcp-manager/releases/download/v#{version}/McpManager-v#{version}-osx-arm64.dmg"
   end
 
   on_intel do
-    sha256 "f6aa0842f0f2b014facd5fe757eb665fbde80a4563f673c0c6b26f2b3b7ab93c"
+    sha256 "34ded5154704af9809d59212e7b38996246cb00bf0b993eeb8e9e8f9438cd22a"
     url "https://github.com/frankhommers/mcp-manager/releases/download/v#{version}/McpManager-v#{version}-osx-x64.dmg"
   end
 
