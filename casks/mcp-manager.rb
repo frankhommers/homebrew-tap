@@ -17,6 +17,12 @@ cask "mcp-manager" do
 
   app "MCP Manager.app"
 
+  postflight do
+    system_command "/usr/bin/xattr",
+                   args: ["-d", "com.apple.quarantine", "#{appdir}/MCP Manager.app"],
+                   sudo: false
+  end
+
   zap trash: [
     "~/.config/mcp-manager",
   ]

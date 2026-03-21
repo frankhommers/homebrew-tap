@@ -17,6 +17,12 @@ cask "git-auto-sync" do
 
   app "Git Auto Sync.app"
 
+  postflight do
+    system_command "/usr/bin/xattr",
+                   args: ["-d", "com.apple.quarantine", "#{appdir}/Git Auto Sync.app"],
+                   sudo: false
+  end
+
   zap trash: [
     "~/.config/git-auto-sync",
     "~/Library/LaunchAgents/com.gitautosync.daemon.plist",

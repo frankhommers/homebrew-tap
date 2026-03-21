@@ -18,6 +18,12 @@ cask "rclone-mount-manager" do
 
   app "Rclone Mount Manager.app"
 
+  postflight do
+    system_command "/usr/bin/xattr",
+                   args: ["-d", "com.apple.quarantine", "#{appdir}/Rclone Mount Manager.app"],
+                   sudo: false
+  end
+
   zap trash: [
     "~/.config/rclone-mount-manager",
   ]
