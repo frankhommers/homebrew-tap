@@ -3,12 +3,12 @@ cask "rclone-mount-manager" do
 
   # TODO: Update SHA256 hashes when first release is published
   on_arm do
-    sha256 "74f783b4146998a4c88c51b71cac1d57885c739946ccf2d5ecbeb97574e70a81"
+    sha256 "d60ed854c1f3a892c78818db4302640bd6029026225c3bb3ddcaee56a7c10ee0"
     url "https://github.com/frankhommers/rclone-mount-manager/releases/download/v#{version}/RcloneMountManager-v#{version}-osx-arm64.dmg"
   end
 
   on_intel do
-    sha256 "33cb81ed072f1a1559f42aa37f25c054a896c757289193886403d1628637646b"
+    sha256 "08161ffd93c29112d6d2301d9271f5b947e4b08a095cfa904a338320c7428302"
     url "https://github.com/frankhommers/rclone-mount-manager/releases/download/v#{version}/RcloneMountManager-v#{version}-osx-x64.dmg"
   end
 
