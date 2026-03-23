@@ -1,13 +1,13 @@
 cask "git-auto-sync" do
-  version "1.0.3"
+  version "1.0.0"
 
   on_arm do
-    sha256 "591bf3a874c64077dc9e5889e9585665cf6bec4be1af0e6bd3b4ed6ad783e004"
+    sha256 "cc7adfccd40e01f4951341e229c342d92625c177c46714ac9f3c28197f89aadd"
     url "https://github.com/frankhommers/git-auto-sync/releases/download/v#{version}/GitAutoSync-v#{version}-osx-arm64.dmg"
   end
 
   on_intel do
-    sha256 "a7574a04ddbdb7a773a7a0ab836c38e1ac2757442e578a7d6cd9bc75f7552b3d"
+    sha256 "ae11da1ed733ff878dc01620b866eda16229f224f756cacda375a2c4987eb0d3"
     url "https://github.com/frankhommers/git-auto-sync/releases/download/v#{version}/GitAutoSync-v#{version}-osx-x64.dmg"
   end
 
