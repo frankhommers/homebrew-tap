@@ -1,0 +1,83 @@
+name: Sync tmux formula
+
+# Onze tmux-formula is geen kopie van homebrew-core maar wordt eruit afgeleid.
+# Deze workflow haalt core's versie op, injecteert onze macOS-patch, bouwt hem
+# echt, verifieert dat de Info.plist erin zit, en commit pas daarna.
+#
+# Gevolg: nieuwe tmux-versies, gewijzigde dependencies en aangepaste
+# configure-flags volgen automatisch. Verandert core zo ingrijpend dat de
+# injectie niet meer past, dan faalt deze workflow en krijg je een melding in
+# plaats van een stille afwijking.
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # maandagochtend
+  workflow_dispatch:
+  push:
+    paths:
+      - "scripts/generate-tmux-formula.py"
+      - ".github/workflows/sync-tmux-formula.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-tmux-formula
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Formula genereren uit homebrew-core
+        id: gen
+        run: |
+          python3 scripts/generate-tmux-formula.py
+          if git diff --quiet -- Formula/tmux.rb; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Geen wijziging ten opzichte van wat er staat."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git --no-pager diff --stat -- Formula/tmux.rb
+          fi
+
+      - name: Style controleren
+        if: steps.gen.outputs.changed == 'true'
+        continue-on-error: true
+        run: brew style Formula/tmux.rb
+
+      - name: Bouwen en verifiëren
+        if: steps.gen.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+
+          # De runner heeft tmux mogelijk voorgeïnstalleerd; die staat in de weg.
+          brew uninstall --ignore-dependencies tmux 2>/dev/null || true
+
+          brew install --build-from-source --formula ./Formula/tmux.rb
+
+          BIN="$(brew --prefix)/bin/tmux"
+          echo "--- controle op $BIN ---"
+
+          otool -l "$BIN" | grep -q "__info_plist" \
+            || { echo "FOUT: __info_plist ontbreekt in de binary"; exit 1; }
+
+          codesign -dvvv "$BIN" 2>&1 | grep -q "Identifier=com.github.tmux" \
+            || { echo "FOUT: verkeerde of ontbrekende bundle-identifier"; exit 1; }
+
+          "$BIN" -V
+          echo "OK: patch zit erin"
+
+      - name: Committen
+        if: steps.gen.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+          VERSION=$(grep -oE 'tmux-[0-9][^/"]*\.tar\.gz' Formula/tmux.rb | head -1 | sed 's/tmux-//;s/\.tar\.gz//')
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/tmux.rb
+          git commit -m "chore: sync tmux formula met homebrew-core (${VERSION})"
+          git push
