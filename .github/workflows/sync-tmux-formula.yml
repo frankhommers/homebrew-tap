@@ -1,17 +1,18 @@
 name: Sync tmux formula
 
-# Onze tmux-formula is geen kopie van homebrew-core maar wordt eruit afgeleid.
-# Deze workflow haalt core's versie op, injecteert onze macOS-patch, bouwt hem
-# echt, verifieert dat de Info.plist erin zit, en commit pas daarna.
+# Our tmux formula is not a copy of homebrew-core but is derived from it.
+# This workflow fetches core's version, injects our macOS patch, actually
+# builds it, verifies the Info.plist ended up in the binary, and only then
+# commits.
 #
-# Gevolg: nieuwe tmux-versies, gewijzigde dependencies en aangepaste
-# configure-flags volgen automatisch. Verandert core zo ingrijpend dat de
-# injectie niet meer past, dan faalt deze workflow en krijg je een melding in
-# plaats van een stille afwijking.
+# As a result new tmux versions, changed dependencies and adjusted configure
+# flags are picked up automatically. If core changes so much that the injection
+# no longer fits, this workflow fails and you get a notification instead of a
+# silent divergence.
 
 on:
   schedule:
-    - cron: "0 6 * * 1" # maandagochtend
+    - cron: "0 6 * * 1" # Monday morning
   workflow_dispatch:
   push:
     paths:
@@ -32,34 +33,34 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Formula genereren uit homebrew-core
+      - name: Generate formula from homebrew-core
         id: gen
         run: |
           python3 scripts/generate-tmux-formula.py
           if git diff --quiet -- Formula/tmux.rb; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "Geen wijziging ten opzichte van wat er staat."
+            echo "No change compared to what is committed."
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
             git --no-pager diff --stat -- Formula/tmux.rb
           fi
 
-      - name: Style controleren
+      - name: Check style
         if: steps.gen.outputs.changed == 'true'
         continue-on-error: true
         run: brew style Formula/tmux.rb
 
-      - name: Bouwen en verifiëren
+      - name: Build and verify
         if: steps.gen.outputs.changed == 'true'
         run: |
           set -euo pipefail
 
-          # De runner heeft tmux mogelijk voorgeïnstalleerd; die staat in de weg.
+          # The runner may ship a preinstalled tmux; it gets in the way.
           brew uninstall --ignore-dependencies tmux 2>/dev/null || true
 
-          # Homebrew accepteert sinds 4.7 geen los formula-pad meer
-          # ("Homebrew requires formulae to be in a tap"), dus tappen we onszelf
-          # en zetten de net gegenereerde formula erin.
+          # Since 4.7 Homebrew no longer accepts a bare formula path
+          # ("Homebrew requires formulae to be in a tap"), so we tap ourselves
+          # and drop the freshly generated formula in there.
           brew tap frankhommers/tap
           TAP_DIR="$(brew --repository frankhommers/tap)"
           cp Formula/tmux.rb "$TAP_DIR/Formula/tmux.rb"
@@ -67,18 +68,18 @@ jobs:
           brew install --build-from-source frankhommers/tap/tmux
 
           BIN="$(brew --prefix)/bin/tmux"
-          echo "--- controle op $BIN ---"
+          echo "--- checking $BIN ---"
 
           otool -l "$BIN" | grep -q "__info_plist" \
-            || { echo "FOUT: __info_plist ontbreekt in de binary"; exit 1; }
+            || { echo "ERROR: __info_plist missing from the binary"; exit 1; }
 
           codesign -dvvv "$BIN" 2>&1 | grep -q "Identifier=com.github.tmux" \
-            || { echo "FOUT: verkeerde of ontbrekende bundle-identifier"; exit 1; }
+            || { echo "ERROR: wrong or missing bundle identifier"; exit 1; }
 
           "$BIN" -V
-          echo "OK: patch zit erin"
+          echo "OK: patch is present"
 
-      - name: Committen
+      - name: Commit
         if: steps.gen.outputs.changed == 'true'
         run: |
           set -euo pipefail
@@ -86,5 +87,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add Formula/tmux.rb
-          git commit -m "chore: sync tmux formula met homebrew-core (${VERSION})"
+          git commit -m "chore: sync tmux formula with homebrew-core (${VERSION})"
           git push
