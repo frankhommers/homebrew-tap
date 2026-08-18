@@ -14,6 +14,11 @@ on:
   schedule:
     - cron: "0 6 * * 1" # Monday morning
   workflow_dispatch:
+    inputs:
+      force_build:
+        description: "Build and verify even when the formula is unchanged"
+        type: boolean
+        default: false
   push:
     paths:
       - "scripts/generate-tmux-formula.py"
@@ -46,12 +51,12 @@ jobs:
           fi
 
       - name: Check style
-        if: steps.gen.outputs.changed == 'true'
+        if: steps.gen.outputs.changed == 'true' || github.event.inputs.force_build == 'true'
         continue-on-error: true
         run: brew style Formula/tmux.rb
 
       - name: Build and verify
-        if: steps.gen.outputs.changed == 'true'
+        if: steps.gen.outputs.changed == 'true' || github.event.inputs.force_build == 'true'
         run: |
           set -euo pipefail
 
@@ -77,6 +82,7 @@ jobs:
             || { echo "ERROR: wrong or missing bundle identifier"; exit 1; }
 
           "$BIN" -V
+          "$(brew --prefix)/bin/tmux-lnp-check" "$BIN"
           echo "OK: patch is present"
 
       - name: Commit

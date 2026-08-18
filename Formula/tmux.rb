@@ -84,9 +84,42 @@ class Tmux < Formula
 
     pkgshare.install "example_tmux.conf"
 
-    # Sign ad-hoc after the plist has been linked in; without a valid
-    # signature macOS ignores the section.
-    system "codesign", "--sign", "-", "--force", bin/"tmux" if OS.mac?
+    if OS.mac?
+      # Sign ad-hoc after the plist has been linked in; without a valid
+      # signature macOS ignores the section.
+      system "codesign", "--sign", "-", "--force", bin/"tmux"
+
+      # `tmux -V` cannot carry a marker: plugin managers parse that string and
+      # compare it numerically, so a suffix would break them. This helper gives
+      # the same answer in one command instead.
+      (bin/"tmux-lnp-check").write <<~SH
+        #!/bin/sh
+        # Report whether a tmux is the patched build from this tap.
+        # Checks the tmux in PATH, or the binary given as first argument.
+
+        bin=${1:-$(command -v tmux)}
+        [ -n "$bin" ] && [ -x "$bin" ] || { echo "tmux: not found"; exit 1; }
+
+        plist=no
+        otool -l "$bin" 2>/dev/null | grep -q __info_plist && plist=yes
+        ident=$(codesign -dvvv "$bin" 2>&1 | sed -n 's/^Identifier=//p')
+
+        echo "binary:     $bin"
+        echo "version:    $("$bin" -V 2>/dev/null)"
+        echo "Info.plist: $plist"
+        echo "identifier: ${ident:-none}"
+
+        if [ "$plist" = yes ] && [ "$ident" = com.github.tmux ]; then
+          echo "result:     patched build, Local Network Privacy can work"
+          exit 0
+        fi
+
+        echo "result:     UNPATCHED, no Info.plist (probably homebrew-core's tmux)"
+        echo "fix:        brew install --build-from-source frankhommers/tap/tmux"
+        exit 1
+      SH
+      chmod 0755, bin/"tmux-lnp-check"
+    end
   end
 
   def caveats
@@ -103,6 +136,11 @@ class Tmux < Formula
 
       If no prompt appears, go to System Settings -> Privacy & Security ->
       Local Network and enable 'tmux'.
+
+      To check which tmux you are running (this build or homebrew-core's
+      unpatched one):
+
+        tmux-lnp-check
     EOS
   end
 
@@ -112,6 +150,7 @@ class Tmux < Formula
     on_macos do
       assert_match "__info_plist", shell_output("otool -l #{bin}/tmux")
       assert_match "com.github.tmux", shell_output("codesign -dvvv #{bin}/tmux 2>&1")
+      assert_match "patched build", shell_output("#{bin}/tmux-lnp-check #{bin}/tmux")
     end
   end
 end
