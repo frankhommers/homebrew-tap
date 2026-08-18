@@ -57,7 +57,14 @@ jobs:
           # De runner heeft tmux mogelijk voorgeïnstalleerd; die staat in de weg.
           brew uninstall --ignore-dependencies tmux 2>/dev/null || true
 
-          brew install --build-from-source --formula ./Formula/tmux.rb
+          # Homebrew accepteert sinds 4.7 geen los formula-pad meer
+          # ("Homebrew requires formulae to be in a tap"), dus tappen we onszelf
+          # en zetten de net gegenereerde formula erin.
+          brew tap frankhommers/tap
+          TAP_DIR="$(brew --repository frankhommers/tap)"
+          cp Formula/tmux.rb "$TAP_DIR/Formula/tmux.rb"
+
+          brew install --build-from-source frankhommers/tap/tmux
 
           BIN="$(brew --prefix)/bin/tmux"
           echo "--- controle op $BIN ---"
