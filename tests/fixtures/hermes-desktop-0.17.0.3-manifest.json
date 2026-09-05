@@ -1,0 +1,578 @@
+{
+  "schema": 1,
+  "buildRepository": "frankhommers/hermes-desktop-builds",
+  "version": "0.17.0.3",
+  "upstream": {
+    "repository": "NousResearch/hermes-agent",
+    "commit": "b0ab2e163a50d4e6c36507eba955a6067fde6abc",
+    "version": "0.17.0",
+    "revision": 3,
+    "node": "22.22.2"
+  },
+  "buildRun": "https://github.com/frankhommers/hermes-desktop-builds/actions/runs/33984384497",
+  "sourcePatch": {
+    "schema": 1,
+    "upstreamCommit": "b0ab2e163a50d4e6c36507eba955a6067fde6abc",
+    "upstreamTree": "ee7b438461826e32b8e5198a36aee47cc303585a",
+    "patchedTree": "ee19fa7e94fc4f24a81114c18beee896293b9cbe",
+    "verified": true,
+    "manifestSha256": "e38c6400998854ce91a99a7cfccbee581baeb1ae6150c79f7f0b0701b65a4c3a",
+    "patches": [
+      {
+        "file": "remote-client-ui.patch",
+        "sha256": "a4851338f1ae3af4cbc8e39f059c747772c5500ab1e5931d91b50702a30a459e"
+      }
+    ]
+  },
+  "targets": {
+    "darwin-arm64": {
+      "version": "0.17.0.3",
+      "upstream": {
+        "repository": "NousResearch/hermes-agent",
+        "commit": "b0ab2e163a50d4e6c36507eba955a6067fde6abc",
+        "version": "0.17.0",
+        "revision": 3,
+        "node": "22.22.2"
+      },
+      "platform": "darwin",
+      "arch": "arm64",
+      "electron": "40.10.2",
+      "archive": "Hermes-0.17.0.3-darwin-arm64-adhoc.zip",
+      "sha256": "e2bbc944eb6cff431a528d4f0b6e2735d9445f25725ced59b03fd3a726be81aa",
+      "bytes": 141169729,
+      "sourceClean": false,
+      "sourceVerified": true,
+      "sourcePatch": {
+        "schema": 1,
+        "upstreamCommit": "b0ab2e163a50d4e6c36507eba955a6067fde6abc",
+        "upstreamTree": "ee7b438461826e32b8e5198a36aee47cc303585a",
+        "patchedTree": "ee19fa7e94fc4f24a81114c18beee896293b9cbe",
+        "verified": true,
+        "manifestSha256": "e38c6400998854ce91a99a7cfccbee581baeb1ae6150c79f7f0b0701b65a4c3a",
+        "patches": [
+          {
+            "file": "remote-client-ui.patch",
+            "sha256": "a4851338f1ae3af4cbc8e39f059c747772c5500ab1e5931d91b50702a30a459e"
+          }
+        ]
+      },
+      "archiveRoundtrip": true,
+      "nativeSmoke": {
+        "platform": "darwin",
+        "arch": "arm64",
+        "paths": {
+          "packaged": true,
+          "path": "/Users/runner/work/hermes-desktop-builds/hermes-desktop-builds/.work/extracted/Hermes.app/Contents/Resources/app.asar",
+          "home": "/Users/runner",
+          "userData": "/Users/runner/work/hermes-desktop-builds/hermes-desktop-builds/.work/smoke/h/u",
+          "hermesHome": "/Users/runner/work/hermes-desktop-builds/hermes-desktop-builds/.work/smoke/h/.hermes",
+          "platform": "darwin",
+          "arch": "arm64",
+          "versions": {
+            "node": "24.15.0",
+            "acorn": "8.16.0",
+            "ada": "3.4.4",
+            "amaro": "1.1.8",
+            "ares": "1.34.6",
+            "brotli": "1.0.9",
+            "cldr": "47.0",
+            "icu": "77.1",
+            "llhttp": "9.3.1",
+            "merve": "1.2.2",
+            "modules": "143",
+            "napi": "10",
+            "nbytes": "0.1.3",
+            "ncrypto": "0.0.1",
+            "nghttp2": "1.68.0",
+            "openssl": "0.0.0",
+            "simdjson": "4.5.0",
+            "simdutf": "7.7.0",
+            "sqlite": "3.51.3",
+            "tz": "2025b",
+            "undici": "7.24.4",
+            "unicode": "16.0",
+            "uv": "1.51.0",
+            "uvwasi": "0.0.23",
+            "v8": "14.4.258.32-electron.0",
+            "zlib": "1.3.1",
+            "zstd": "1.5.8",
+            "electron": "40.10.2",
+            "chrome": "144.0.7559.236"
+          }
+        },
+        "firstRun": true,
+        "remoteForm": true,
+        "remoteSetupDirect": true,
+        "localInstallOfferAbsent": true,
+        "unreachableRemoteBlocksApply": true,
+        "bootstrap": {
+          "active": false,
+          "manifest": null,
+          "stages": {},
+          "error": null,
+          "log": [],
+          "startedAt": null,
+          "completedAt": null,
+          "setupChoice": {
+            "platform": "darwin",
+            "activeRoot": "/Users/runner/work/hermes-desktop-builds/hermes-desktop-builds/.work/smoke/h/.hermes/hermes-agent"
+          },
+          "unsupportedPlatform": null
+        },
+        "ptyResult": {
+          "exitCode": 0,
+          "output": "HERMES_NATIVE_PTY_OK"
+        },
+        "errors": [],
+        "noAgentCheckout": true,
+        "localInstallStarted": false
+      },
+      "fullSuite": null,
+      "targetedSuite": {
+        "total": 121,
+        "passed": 121,
+        "failed": 0,
+        "pending": 0,
+        "allowedFailures": [],
+        "suiteGreen": true,
+        "releaseGatePassed": true
+      },
+      "macSigning": {
+        "schema": 1,
+        "mode": "ad-hoc",
+        "developerID": false,
+        "notarized": false,
+        "stagedNativeCount": 3,
+        "bundleVerified": true,
+        "archiveVerified": true,
+        "nativePayloadsVerified": 3,
+        "tamperRejected": true,
+        "missingSealRejected": true,
+        "gatekeeper": {
+          "enabled": true,
+          "quarantinePresent": true,
+          "accepted": false,
+          "exitCode": 3,
+          "assessment": "unnotarized-ad-hoc"
+        }
+      },
+      "signing": "Ad-hoc signed; no Developer ID or Apple notarization",
+      "limitations": [
+        "No real remote credentials/login/chat tested",
+        "Not Apple-notarized; Gatekeeper rejects ad-hoc publisher trust",
+        "No Finder Open Anyway or SmartScreen acceptance test",
+        "No microphone/camera/screen/TCC end-to-end test",
+        "Native full UI suite runs on Linux only"
+      ]
+    },
+    "darwin-x64": {
+      "version": "0.17.0.3",
+      "upstream": {
+        "repository": "NousResearch/hermes-agent",
+        "commit": "b0ab2e163a50d4e6c36507eba955a6067fde6abc",
+        "version": "0.17.0",
+        "revision": 3,
+        "node": "22.22.2"
+      },
+      "platform": "darwin",
+      "arch": "x64",
+      "electron": "40.10.2",
+      "archive": "Hermes-0.17.0.3-darwin-x64-adhoc.zip",
+      "sha256": "6459527f09c36be01322443e2d4fcc2e82801ff7de1c0a7d7343a4400d0d842d",
+      "bytes": 147914779,
+      "sourceClean": false,
+      "sourceVerified": true,
+      "sourcePatch": {
+        "schema": 1,
+        "upstreamCommit": "b0ab2e163a50d4e6c36507eba955a6067fde6abc",
+        "upstreamTree": "ee7b438461826e32b8e5198a36aee47cc303585a",
+        "patchedTree": "ee19fa7e94fc4f24a81114c18beee896293b9cbe",
+        "verified": true,
+        "manifestSha256": "e38c6400998854ce91a99a7cfccbee581baeb1ae6150c79f7f0b0701b65a4c3a",
+        "patches": [
+          {
+            "file": "remote-client-ui.patch",
+            "sha256": "a4851338f1ae3af4cbc8e39f059c747772c5500ab1e5931d91b50702a30a459e"
+          }
+        ]
+      },
+      "archiveRoundtrip": true,
+      "nativeSmoke": {
+        "platform": "darwin",
+        "arch": "x64",
+        "paths": {
+          "packaged": true,
+          "path": "/Users/runner/work/hermes-desktop-builds/hermes-desktop-builds/.work/extracted/Hermes.app/Contents/Resources/app.asar",
+          "home": "/Users/runner",
+          "userData": "/Users/runner/work/hermes-desktop-builds/hermes-desktop-builds/.work/smoke/h/u",
+          "hermesHome": "/Users/runner/work/hermes-desktop-builds/hermes-desktop-builds/.work/smoke/h/.hermes",
+          "platform": "darwin",
+          "arch": "x64",
+          "versions": {
+            "node": "24.15.0",
+            "acorn": "8.16.0",
+            "ada": "3.4.4",
+            "amaro": "1.1.8",
+            "ares": "1.34.6",
+            "brotli": "1.0.9",
+            "cldr": "47.0",
+            "icu": "77.1",
+            "llhttp": "9.3.1",
+            "merve": "1.2.2",
+            "modules": "143",
+            "napi": "10",
+            "nbytes": "0.1.3",
+            "ncrypto": "0.0.1",
+            "nghttp2": "1.68.0",
+            "openssl": "0.0.0",
+            "simdjson": "4.5.0",
+            "simdutf": "7.7.0",
+            "sqlite": "3.51.3",
+            "tz": "2025b",
+            "undici": "7.24.4",
+            "unicode": "16.0",
+            "uv": "1.51.0",
+            "uvwasi": "0.0.23",
+            "v8": "14.4.258.32-electron.0",
+            "zlib": "1.3.1",
+            "zstd": "1.5.8",
+            "electron": "40.10.2",
+            "chrome": "144.0.7559.236"
+          }
+        },
+        "firstRun": true,
+        "remoteForm": true,
+        "remoteSetupDirect": true,
+        "localInstallOfferAbsent": true,
+        "unreachableRemoteBlocksApply": true,
+        "bootstrap": {
+          "active": false,
+          "manifest": null,
+          "stages": {},
+          "error": null,
+          "log": [],
+          "startedAt": null,
+          "completedAt": null,
+          "setupChoice": {
+            "platform": "darwin",
+            "activeRoot": "/Users/runner/work/hermes-desktop-builds/hermes-desktop-builds/.work/smoke/h/.hermes/hermes-agent"
+          },
+          "unsupportedPlatform": null
+        },
+        "ptyResult": {
+          "exitCode": 0,
+          "output": "HERMES_NATIVE_PTY_OK"
+        },
+        "errors": [],
+        "noAgentCheckout": true,
+        "localInstallStarted": false
+      },
+      "fullSuite": null,
+      "targetedSuite": {
+        "total": 121,
+        "passed": 121,
+        "failed": 0,
+        "pending": 0,
+        "allowedFailures": [],
+        "suiteGreen": true,
+        "releaseGatePassed": true
+      },
+      "macSigning": {
+        "schema": 1,
+        "mode": "ad-hoc",
+        "developerID": false,
+        "notarized": false,
+        "stagedNativeCount": 3,
+        "bundleVerified": true,
+        "archiveVerified": true,
+        "nativePayloadsVerified": 3,
+        "tamperRejected": true,
+        "missingSealRejected": true,
+        "gatekeeper": {
+          "enabled": true,
+          "quarantinePresent": true,
+          "accepted": false,
+          "exitCode": 3,
+          "assessment": "unnotarized-ad-hoc"
+        }
+      },
+      "signing": "Ad-hoc signed; no Developer ID or Apple notarization",
+      "limitations": [
+        "No real remote credentials/login/chat tested",
+        "Not Apple-notarized; Gatekeeper rejects ad-hoc publisher trust",
+        "No Finder Open Anyway or SmartScreen acceptance test",
+        "No microphone/camera/screen/TCC end-to-end test",
+        "Native full UI suite runs on Linux only"
+      ]
+    },
+    "win32-x64": {
+      "version": "0.17.0.3",
+      "upstream": {
+        "repository": "NousResearch/hermes-agent",
+        "commit": "b0ab2e163a50d4e6c36507eba955a6067fde6abc",
+        "version": "0.17.0",
+        "revision": 3,
+        "node": "22.22.2"
+      },
+      "platform": "win32",
+      "arch": "x64",
+      "electron": "40.10.2",
+      "archive": "Hermes-0.17.0.3-win32-x64-unsigned.zip",
+      "sha256": "81e8ba68e50b90d5750b38d86ae137c68824c7fae7beef13c8fc04a4f8e5b7b8",
+      "bytes": 168140794,
+      "sourceClean": false,
+      "sourceVerified": true,
+      "sourcePatch": {
+        "schema": 1,
+        "upstreamCommit": "b0ab2e163a50d4e6c36507eba955a6067fde6abc",
+        "upstreamTree": "ee7b438461826e32b8e5198a36aee47cc303585a",
+        "patchedTree": "ee19fa7e94fc4f24a81114c18beee896293b9cbe",
+        "verified": true,
+        "manifestSha256": "e38c6400998854ce91a99a7cfccbee581baeb1ae6150c79f7f0b0701b65a4c3a",
+        "patches": [
+          {
+            "file": "remote-client-ui.patch",
+            "sha256": "a4851338f1ae3af4cbc8e39f059c747772c5500ab1e5931d91b50702a30a459e"
+          }
+        ]
+      },
+      "archiveRoundtrip": true,
+      "nativeSmoke": {
+        "platform": "win32",
+        "arch": "x64",
+        "paths": {
+          "packaged": true,
+          "path": "D:\\a\\hermes-desktop-builds\\hermes-desktop-builds\\.work\\extracted\\Hermes\\resources\\app.asar",
+          "home": "C:\\Users\\runneradmin",
+          "userData": "D:\\a\\hermes-desktop-builds\\hermes-desktop-builds\\.work\\smoke\\h\\u",
+          "hermesHome": "D:\\a\\hermes-desktop-builds\\hermes-desktop-builds\\.work\\smoke\\h\\.hermes",
+          "platform": "win32",
+          "arch": "x64",
+          "versions": {
+            "node": "24.15.0",
+            "acorn": "8.16.0",
+            "ada": "3.4.4",
+            "amaro": "1.1.8",
+            "ares": "1.34.6",
+            "brotli": "1.0.9",
+            "cldr": "47.0",
+            "icu": "77.1",
+            "llhttp": "9.3.1",
+            "merve": "1.2.2",
+            "modules": "143",
+            "napi": "10",
+            "nbytes": "0.1.3",
+            "ncrypto": "0.0.1",
+            "nghttp2": "1.68.0",
+            "openssl": "0.0.0",
+            "simdjson": "4.5.0",
+            "simdutf": "7.7.0",
+            "sqlite": "3.51.3",
+            "tz": "2025b",
+            "undici": "7.24.4",
+            "unicode": "16.0",
+            "uv": "1.51.0",
+            "uvwasi": "0.0.23",
+            "v8": "14.4.258.32-electron.0",
+            "zlib": "1.3.1",
+            "zstd": "1.5.8",
+            "electron": "40.10.2",
+            "chrome": "144.0.7559.236"
+          }
+        },
+        "firstRun": true,
+        "remoteForm": true,
+        "remoteSetupDirect": true,
+        "localInstallOfferAbsent": true,
+        "unreachableRemoteBlocksApply": true,
+        "bootstrap": {
+          "active": false,
+          "manifest": null,
+          "stages": {},
+          "error": null,
+          "log": [],
+          "startedAt": null,
+          "completedAt": null,
+          "setupChoice": {
+            "platform": "win32",
+            "activeRoot": "D:\\a\\hermes-desktop-builds\\hermes-desktop-builds\\.work\\smoke\\h\\.hermes\\hermes-agent"
+          },
+          "unsupportedPlatform": null
+        },
+        "ptyResult": {
+          "exitCode": 0,
+          "output": "\u001b[?9001h\u001b[?1004h\u001b[?25l\u001b[2J\u001b[m\u001b[HHERMES_NATIVE_PTY_OK\r\n\u001b]0;C:\\Windows\\system32\\cmd.exe\u0007\u001b[?25h"
+        },
+        "errors": [],
+        "noAgentCheckout": true,
+        "localInstallStarted": false
+      },
+      "fullSuite": null,
+      "targetedSuite": {
+        "total": 121,
+        "passed": 119,
+        "failed": 1,
+        "pending": 1,
+        "allowedFailures": [
+          {
+            "file": "D:/a/hermes-desktop-builds/hermes-desktop-builds/.work/src/apps/desktop/scripts/stage-native-deps.test.mjs",
+            "test": "darwin staging ships the Swift helper executable and the rewritten windows.js",
+            "reason": "Cross-Darwin fixture asserts POSIX 0755 on Windows (0666); actual Mac helper mode is verified in native Mac builds."
+          }
+        ],
+        "suiteGreen": false,
+        "releaseGatePassed": true
+      },
+      "macSigning": null,
+      "signing": "No Authenticode/signing",
+      "limitations": [
+        "No real remote credentials/login/chat tested",
+        "Not Apple-notarized; Gatekeeper rejects ad-hoc publisher trust",
+        "No Finder Open Anyway or SmartScreen acceptance test",
+        "No microphone/camera/screen/TCC end-to-end test",
+        "Native full UI suite runs on Linux only"
+      ]
+    },
+    "linux-x64": {
+      "version": "0.17.0.3",
+      "upstream": {
+        "repository": "NousResearch/hermes-agent",
+        "commit": "b0ab2e163a50d4e6c36507eba955a6067fde6abc",
+        "version": "0.17.0",
+        "revision": 3,
+        "node": "22.22.2"
+      },
+      "platform": "linux",
+      "arch": "x64",
+      "electron": "40.10.2",
+      "archive": "Hermes-0.17.0.3-linux-x64-unsigned.tar.gz",
+      "sha256": "96486b35077d19aba418420346b62aff9d41d433056942f0d6500b55a973ec66",
+      "bytes": 141639454,
+      "sourceClean": false,
+      "sourceVerified": true,
+      "sourcePatch": {
+        "schema": 1,
+        "upstreamCommit": "b0ab2e163a50d4e6c36507eba955a6067fde6abc",
+        "upstreamTree": "ee7b438461826e32b8e5198a36aee47cc303585a",
+        "patchedTree": "ee19fa7e94fc4f24a81114c18beee896293b9cbe",
+        "verified": true,
+        "manifestSha256": "e38c6400998854ce91a99a7cfccbee581baeb1ae6150c79f7f0b0701b65a4c3a",
+        "patches": [
+          {
+            "file": "remote-client-ui.patch",
+            "sha256": "a4851338f1ae3af4cbc8e39f059c747772c5500ab1e5931d91b50702a30a459e"
+          }
+        ]
+      },
+      "archiveRoundtrip": true,
+      "nativeSmoke": {
+        "platform": "linux",
+        "arch": "x64",
+        "paths": {
+          "packaged": true,
+          "path": "/home/runner/work/hermes-desktop-builds/hermes-desktop-builds/.work/extracted/Hermes/resources/app.asar",
+          "home": "/home/runner/work/hermes-desktop-builds/hermes-desktop-builds/.work/smoke/h",
+          "userData": "/home/runner/work/hermes-desktop-builds/hermes-desktop-builds/.work/smoke/h/u",
+          "hermesHome": "/home/runner/work/hermes-desktop-builds/hermes-desktop-builds/.work/smoke/h/.hermes",
+          "platform": "linux",
+          "arch": "x64",
+          "versions": {
+            "node": "24.15.0",
+            "acorn": "8.16.0",
+            "ada": "3.4.4",
+            "amaro": "1.1.8",
+            "ares": "1.34.6",
+            "brotli": "1.0.9",
+            "cldr": "47.0",
+            "icu": "77.1",
+            "llhttp": "9.3.1",
+            "merve": "1.2.2",
+            "modules": "143",
+            "napi": "10",
+            "nbytes": "0.1.3",
+            "ncrypto": "0.0.1",
+            "nghttp2": "1.68.0",
+            "openssl": "0.0.0",
+            "simdjson": "4.5.0",
+            "simdutf": "7.7.0",
+            "sqlite": "3.51.3",
+            "tz": "2025b",
+            "undici": "7.24.4",
+            "unicode": "16.0",
+            "uv": "1.51.0",
+            "uvwasi": "0.0.23",
+            "v8": "14.4.258.32-electron.0",
+            "zlib": "1.3.1",
+            "zstd": "1.5.8",
+            "electron": "40.10.2",
+            "chrome": "144.0.7559.236"
+          }
+        },
+        "firstRun": true,
+        "remoteForm": true,
+        "remoteSetupDirect": true,
+        "localInstallOfferAbsent": true,
+        "unreachableRemoteBlocksApply": true,
+        "bootstrap": {
+          "active": false,
+          "manifest": null,
+          "stages": {},
+          "error": null,
+          "log": [],
+          "startedAt": null,
+          "completedAt": null,
+          "setupChoice": {
+            "platform": "linux",
+            "activeRoot": "/home/runner/work/hermes-desktop-builds/hermes-desktop-builds/.work/smoke/h/.hermes/hermes-agent"
+          },
+          "unsupportedPlatform": null
+        },
+        "ptyResult": {
+          "exitCode": 0,
+          "output": "HERMES_NATIVE_PTY_OK"
+        },
+        "errors": [],
+        "noAgentCheckout": true,
+        "localInstallStarted": false
+      },
+      "fullSuite": {
+        "total": 9348,
+        "passed": 9340,
+        "failed": 2,
+        "pending": 6,
+        "allowedFailures": [
+          {
+            "file": "/home/runner/work/hermes-desktop-builds/hermes-desktop-builds/.work/src/apps/desktop/electron/ssh-connection.test.ts",
+            "test": "controlSocketPath default base stays under sun_path even with the temp-listener suffix",
+            "reason": "Isolated long HOME exceeds the SSH control socket test path budget; URL remote smoke does not use SSH."
+          },
+          {
+            "file": "/home/runner/work/hermes-desktop-builds/hermes-desktop-builds/.work/src/apps/desktop/src/components/ui/__tests__/no-native-title.test.ts",
+            "test": "no native title= on button elements uses <Tip> instead of native title= on all button elements",
+            "reason": "Upstream listing-embed.tsx uses a native title; style rule fails, no source patch applied."
+          }
+        ],
+        "suiteGreen": false,
+        "releaseGatePassed": true
+      },
+      "targetedSuite": {
+        "total": 121,
+        "passed": 121,
+        "failed": 0,
+        "pending": 0,
+        "allowedFailures": [],
+        "suiteGreen": true,
+        "releaseGatePassed": true
+      },
+      "macSigning": null,
+      "signing": "No Authenticode/signing",
+      "limitations": [
+        "No real remote credentials/login/chat tested",
+        "Not Apple-notarized; Gatekeeper rejects ad-hoc publisher trust",
+        "No Finder Open Anyway or SmartScreen acceptance test",
+        "No microphone/camera/screen/TCC end-to-end test",
+        "Native full UI suite runs on Linux only"
+      ]
+    }
+  }
+}

@@ -120,7 +120,8 @@ def validate_sources(manifest):
         if platform == 'linux':
             require_fields(target.get('fullSuite'), {'releaseGatePassed': True}, 'Full suite')
         suffix = 'adhoc' if platform == 'darwin' else 'unsigned'
-        if (target.get('archive') != f'Hermes-{manifest["version"]}-{label}-{suffix}.zip'
+        extension = 'tar.gz' if platform == 'linux' else 'zip'
+        if (target.get('archive') != f'Hermes-{manifest["version"]}-{label}-{suffix}.{extension}'
                 or not hex_digest(target.get('sha256'), 64)):
             raise ValueError('Bad patched artifact')
     return patched
