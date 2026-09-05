@@ -3,9 +3,11 @@
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import urllib.request
+import urllib.parse
 
 REPO='frankhommers/hermes-desktop-builds'
 ROOT=Path(__file__).resolve().parents[1]
@@ -13,6 +15,12 @@ ROOT=Path(__file__).resolve().parents[1]
 
 def get_json(url):
     request=urllib.request.Request(url,headers={'User-Agent':'frankhommers-homebrew-tap','Accept':'application/json'})
+    parsed=urllib.parse.urlsplit(url)
+    token=os.environ.get('GH_TOKEN')
+    if token and parsed.scheme=='https' and parsed.netloc=='api.github.com':
+        # Hosted runners share unauthenticated API quotas. Keep the read-only
+        # Actions token off release/CDN requests and off every redirected request.
+        request.add_unredirected_header('Authorization','Bearer '+token)
     with urllib.request.urlopen(request,timeout=60) as response:
         return json.load(response)
 

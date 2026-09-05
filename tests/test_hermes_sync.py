@@ -1,6 +1,7 @@
 import copy
 import importlib.util
 import hashlib
+import io
 import json
 from pathlib import Path
 import tempfile
@@ -37,6 +38,19 @@ def signing_fixture():
 
 
 class SyncTests(unittest.TestCase):
+    def test_actions_token_is_used_only_for_https_github_api_not_downloads(self):
+        for url, expected in [('https://api.github.com/repos/x/y/releases', 'Bearer unit-test-token'),
+                              ('https://github.com/x/y/releases/download/v1/manifest.json', None),
+                              ('https://example.invalid/', None),
+                              ('http://api.github.com/repos/x/y/releases', None)]:
+            with self.subTest(url=url), mock.patch.dict('os.environ', {'GH_TOKEN': 'unit-test-token'}, clear=True), mock.patch.object(
+                sync.urllib.request, 'urlopen', return_value=io.BytesIO(b'{}')
+            ) as opener:
+                sync.get_json(url)
+                request = opener.call_args.args[0]
+                self.assertEqual(request.get_header('Authorization'), expected)
+                self.assertNotIn('Authorization', request.headers)  # Must not survive a redirect.
+
     def fixture(self):
         # Metadata-only unit fixture; no app or pretend release is produced.
         manifest = {
