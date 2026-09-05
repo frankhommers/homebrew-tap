@@ -17,27 +17,56 @@ def get_json(url):
 
 
 def version_tuple(version):
-    if not re.fullmatch(r'\d+\.\d+\.\d+\.\d+',version):raise ValueError('Invalid distribution version')
+    if not isinstance(version,str) or not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+',version):raise ValueError('Invalid distribution version')
     return tuple(map(int,version.split('.')))
+
+
+def require_fields(obj,expected,label):
+    """Require JSON types as well as values (True == 1 in Python)."""
+    if not isinstance(obj,dict):
+        raise ValueError(f'{label}: expected an object')
+    for key,value in expected.items():
+        actual=obj.get(key)
+        if type(actual) is not type(value) or actual!=value:
+            raise ValueError(f'{label}: invalid or missing {key}')
+
+
+def validate_mac_signing(signing):
+    require_fields(signing,{
+        'schema':1,'mode':'ad-hoc','developerID':False,'notarized':False,
+        'bundleVerified':True,'archiveVerified':True,
+        'tamperRejected':True,'missingSealRejected':True,
+    },'Mac signing')
+    for key in ('stagedNativeCount','nativePayloadsVerified'):
+        value=signing.get(key)
+        if type(value) is not int or value<=0:
+            raise ValueError(f'Mac signing: {key} must be a positive integer')
+    if signing['nativePayloadsVerified']!=signing['stagedNativeCount']:
+        raise ValueError('Mac signing: not all staged native payloads were verified')
+    require_fields(signing.get('gatekeeper'),{
+        'enabled':True,'quarantinePresent':True,'accepted':False,
+        'exitCode':3,'assessment':'unnotarized-ad-hoc',
+    },'Mac signing Gatekeeper')
 
 
 def render(manifest):
     version=manifest['version'];version_tuple(version)
-    if manifest.get('schema')!=1 or manifest.get('buildRepository')!=REPO:raise ValueError('Wrong release provenance')
+    require_fields(manifest,{'schema':1,'buildRepository':REPO},'Wrong release provenance')
     if not re.fullmatch(r'https://github.com/frankhommers/hermes-desktop-builds/actions/runs/\d+',manifest['buildRun']):raise ValueError('Missing build run')
     targets=manifest['targets']
     if set(targets)!={'darwin-arm64','darwin-x64','win32-x64','linux-x64'}:raise ValueError('Incomplete crossplatform release')
     blocks=[]
     for arch,condition in [('arm64','on_arm'),('x64','on_intel')]:
         m=targets['darwin-'+arch]
-        expected=f'Hermes-{version}-darwin-{arch}-unsigned.zip'
+        expected=f'Hermes-{version}-darwin-{arch}-adhoc.zip'
         if m['archive']!=expected or not re.fullmatch('[0-9a-f]{64}',m['sha256']):raise ValueError('Bad Mac artifact')
-        if m['nativeSmoke']['platform']!='darwin' or m['nativeSmoke']['arch']!=arch or m['nativeSmoke']['errors']:raise ValueError('Bad Mac smoke')
-        if not m['sourceClean'] or not m['archiveRoundtrip']:raise ValueError('Incomplete validation')
+        require_fields(m.get('nativeSmoke'),{'platform':'darwin','arch':arch,'errors':[]},'Bad Mac smoke')
+        require_fields(m,{'sourceClean':True,'archiveRoundtrip':True},'Incomplete validation')
+        validate_mac_signing(m.get('macSigning'))
         blocks.append(f'''  {condition} do
     sha256 "{m['sha256']}"
 
-    url "https://github.com/{REPO}/releases/download/v#{{version}}/Hermes-#{{version}}-darwin-{arch}-unsigned.zip"
+    url "https://github.com/{REPO}/releases/download/v#{{version}}/Hermes-#{{version}}-darwin-{arch}-adhoc.zip"
   end''')
     return f'''# frozen_string_literal: true
 
@@ -55,7 +84,8 @@ cask "hermes-desktop" do
   app "Hermes.app"
 
   caveats <<~EOS
-    Unsigned community build; not Apple-notarized. Gatekeeper remains enabled.
+    Ad-hoc signed community build; no Developer ID or Apple notarization.
+    Gatekeeper remains enabled; app-specific approval may be required.
     Choose "Connect to existing Hermes", not "Install Hermes locally".
     An existing local Hermes runtime may be discovered and started by upstream.
     Review existing installations before launching if local startup must be avoided.
@@ -75,7 +105,7 @@ def main():
         release=get_json(f'https://api.github.com/repos/{REPO}/releases/tags/v{args.version}')
     else:
         releases=get_json(f'https://api.github.com/repos/{REPO}/releases?per_page=100')
-        candidates=[r for r in releases if not r['draft'] and re.fullmatch(r'v\d+\.\d+\.\d+\.\d+',r['tag_name'])]
+        candidates=[r for r in releases if not r['draft'] and re.fullmatch(r'v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+',r['tag_name'])]
         if not candidates:raise ValueError('No verified Hermes Desktop releases yet')
         release=max(candidates,key=lambda r:version_tuple(r['tag_name'][1:]))
     version=release['tag_name'][1:];version_tuple(version)
@@ -85,7 +115,7 @@ def main():
     manifest=get_json(url)
     if manifest['version']!=version:raise ValueError('Manifest/tag mismatch')
     for arch in ('arm64','x64'):
-        name=f'Hermes-{version}-darwin-{arch}-unsigned.zip'
+        name=f'Hermes-{version}-darwin-{arch}-adhoc.zip'
         if not any(a['name']==name for a in release['assets']):raise ValueError('Missing Mac ZIP asset')
     text=render(manifest)
     if args.output.exists():
