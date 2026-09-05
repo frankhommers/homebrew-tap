@@ -67,6 +67,74 @@ jobs:
           test -x "$RUNNER_TEMP/hermes-cask-apps/Hermes.app/Contents/MacOS/Hermes"
           file "$RUNNER_TEMP/hermes-cask-apps/Hermes.app/Contents/MacOS/Hermes"
           brew info --json=v2 --cask frankhommers/tap/hermes-desktop
+      - name: Verify installed code seals and assess Gatekeeper without bypasses
+        shell: python
+        run: |
+          import hashlib, json, os, pathlib, re, subprocess
+
+          app = pathlib.Path(os.environ['RUNNER_TEMP']) / 'hermes-cask-apps/Hermes.app'
+          logs = pathlib.Path(os.environ['RUNNER_TEMP']) / 'hermes-cask-signing'
+          logs.mkdir(parents=True, exist_ok=True)
+
+          def run_logged(name, command):
+              result = subprocess.run(command, capture_output=True)
+              (logs / f'{name}.stdout.log').write_bytes(result.stdout)
+              (logs / f'{name}.stderr.log').write_bytes(result.stderr)
+              (logs / f'{name}.json').write_text(json.dumps({
+                  'command': command, 'exitCode': result.returncode,
+              }, indent=2) + '\n')
+              print(f'{name}: exit {result.returncode}')
+              return result
+
+          seal = app / 'Contents/_CodeSignature/CodeResources'
+          if not seal.is_file() or seal.stat().st_size == 0:
+              raise RuntimeError('Missing or empty root CodeResources')
+          seal_bytes = seal.read_bytes()
+          (logs / 'CodeResources').write_bytes(seal_bytes)
+          root_seal = {
+              'path': str(seal), 'size': len(seal_bytes),
+              'sha256': hashlib.sha256(seal_bytes).hexdigest(),
+          }
+          (logs / 'root-CodeResources.json').write_text(json.dumps(root_seal, indent=2) + '\n')
+          verified = run_logged('codesign', [
+              '/usr/bin/codesign', '--verify', '--deep', '--strict', '--verbose=2', str(app),
+          ])
+          if verified.returncode != 0:
+              raise RuntimeError('Installed codesign verification failed; see raw logs')
+
+          status = run_logged('gatekeeper-status', ['/usr/sbin/spctl', '--status'])
+          if status.returncode != 0 or (status.stdout + status.stderr).strip() != b'assessments enabled':
+              raise RuntimeError('Gatekeeper must remain enabled')
+          quarantine = run_logged('quarantine', ['/usr/bin/xattr', '-p', 'com.apple.quarantine', str(app)])
+          if quarantine.returncode != 0 or not quarantine.stdout.strip():
+              raise RuntimeError('Gatekeeper assessment requires the installed app quarantine')
+          assessment = run_logged('gatekeeper-assessment', [
+              '/usr/sbin/spctl', '--assess', '--type', 'execute', '--verbose=4', str(app),
+          ])
+          output = (assessment.stdout + assessment.stderr).decode('utf-8', errors='replace').lower()
+          bad_seal = any(marker in output for marker in (
+              'coderesources', 'code has no resources', 'sealed resource',
+              'resource envelope', 'invalid signature', 'not signed at all',
+          ))
+          if (assessment.returncode != 3 or not re.search(r': rejected\s*$', output, re.M)
+                  or re.search(r': accepted\b', output) or bad_seal):
+              raise RuntimeError('Unexpected Gatekeeper result; require rejection, not invalid code seals')
+          report = {
+              'bundleVerified': True, 'rootCodeResources': root_seal,
+              'gatekeeper': {
+                  'enabled': True, 'quarantinePresent': True, 'accepted': False,
+                  'exitCode': assessment.returncode, 'assessment': 'unnotarized-ad-hoc',
+              },
+          }
+          (logs / 'verification.json').write_text(json.dumps(report, indent=2) + '\n')
+      - name: Retain installed signature and Gatekeeper evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: hermes-cask-signing-${{ matrix.runner }}
+          path: ${{ runner.temp }}/hermes-cask-signing
+          if-no-files-found: warn
+          retention-days: 14
   publish:
     needs: [prepare, validate]
     if: needs.prepare.outputs.changed == 'true'
