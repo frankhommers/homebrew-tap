@@ -59,8 +59,9 @@ class SyncTests(unittest.TestCase):
         }
         for platform, arch in [('darwin', 'arm64'), ('darwin', 'x64'), ('win32', 'x64'), ('linux', 'x64')]:
             suffix = 'adhoc' if platform == 'darwin' else 'unsigned'
+            extension = 'tar.gz' if platform == 'linux' else 'zip'
             target = {
-                'archive': f'Hermes-0.17.0.2-{platform}-{arch}-{suffix}.zip',
+                'archive': f'Hermes-0.17.0.2-{platform}-{arch}-{suffix}.{extension}',
                 'sha256': ('1' if arch == 'arm64' else '2') * 64,
                 'sourceClean': True, 'archiveRoundtrip': True,
                 'nativeSmoke': {'platform': platform, 'arch': arch, 'errors': []},
@@ -137,6 +138,28 @@ class SyncTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 self.run_patched(output, manifest, release, downloads)
             self.assertEqual(output.read_bytes(), old)
+
+    def test_real_published_manifest_matches_the_tap_contract(self):
+        # Original bytes downloaded from the immutable public v0.17.0.3 release.
+        # This is real producer output, not a manually constructed counterpart.
+        raw = (Path(__file__).parent / 'fixtures/hermes-desktop-0.17.0.3-manifest.json').read_bytes()
+        self.assertEqual(hashlib.sha256(raw).hexdigest(),
+                         '6b5a14610e3195daa3126ce9a82ba5fbcad75ea0f48d13583fe5912266012fef')
+        manifest = json.loads(raw)
+        self.assertTrue(sync.validate_sources(manifest))
+        self.assertIn('version "0.17.0.3"', sync.render(manifest))
+
+    def test_linux_archive_format_is_exact_without_relaxing_other_targets(self):
+        for label in ('darwin-arm64', 'darwin-x64', 'win32-x64', 'linux-x64'):
+            with self.subTest(label=label):
+                manifest, _ = self.patched_fixture()
+                target = manifest['targets'][label]
+                if label == 'linux-x64':
+                    target['archive'] = target['archive'].replace('.tar.gz', '.zip')
+                else:
+                    target['archive'] = target['archive'].replace('.zip', '.tar.gz')
+                with self.assertRaisesRegex(ValueError, 'Bad patched artifact'):
+                    sync.validate_sources(manifest)
 
     def test_verified_patch_renders_only_new_guidance_and_syncs_idempotently(self):
         manifest, files = self.patched_fixture()
