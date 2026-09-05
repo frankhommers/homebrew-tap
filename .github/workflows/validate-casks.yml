@@ -1,0 +1,51 @@
+name: Validate tap casks
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'casks/**'
+      - 'scripts/validate-casks.py'
+      - 'tests/**'
+      - '.github/workflows/validate-casks.yml'
+      - '.github/workflows/update-cask.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: python3 -m unittest discover -s tests -v
+
+  native:
+    needs: tests
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, macos-15-intel]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: '1'
+      HOMEBREW_NO_ANALYTICS: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Update Homebrew for current DSL validation
+        run: brew update
+      - name: Validate all casks and install the three migrated apps
+        run: python3 scripts/validate-casks.py
+      - name: Retain actual Homebrew and installation evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: cask-validation-${{ matrix.runner }}
+          path: ${{ runner.temp }}/cask-validation
+          if-no-files-found: warn
+          retention-days: 14

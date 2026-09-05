@@ -41,6 +41,21 @@ crossplatform release manifest, validates/downloads/installs on both Mac archite
 and commits the cask only after those checks pass. No cross-repository PAT is needed.
 The installer checks do not prove Gatekeeper acceptance or remote-backend login on your Mac.
 
+### Cask maintenance
+
+The **Validate tap casks** pull-request workflow checks the current Homebrew DSL,
+style and audit for every cask on Apple Silicon and Intel Macs. It also downloads,
+checks SHA256 and installs `git-auto-sync`, `mcp-manager` and
+`rclone-mount-manager` into a temporary app directory, verifying their native
+executables and structured `postflight_steps`. It does not launch those apps.
+Hermes retains its separate signature/Gatekeeper installation gate.
+
+The three older apps retain their existing, app-root-only quarantine removal;
+this DSL migration does not add signing or notarization. Hermes does **not** use
+that hook. Published application versions, URLs and checksums are unchanged.
+The release-triggered cask updater changes only versions/checksums and runs DSL
+regression tests before publishing, so future updates preserve the modern syntax.
+
 ## Available Formulae
 
 | Formula | Description | Install |
