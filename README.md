@@ -12,9 +12,34 @@ brew tap frankhommers/tap
 
 | Cask | Description | Install |
 |------|-------------|---------|
+| hermes-desktop | Standalone Hermes Electron Desktop, unsigned community preview | `brew install --cask frankhommers/tap/hermes-desktop` |
 | mcp-manager | MCP server management with multi-target export | `brew install --cask frankhommers/tap/mcp-manager` |
 | git-auto-sync | Git repository auto-sync with GUI and daemon | `brew install --cask frankhommers/tap/git-auto-sync` |
 | rclone-mount-manager | Rclone mount manager with GUI | `brew install --cask frankhommers/tap/rclone-mount-manager` |
+
+### Hermes Desktop
+
+```bash
+brew install --cask frankhommers/tap/hermes-desktop
+# Later:
+brew update
+brew upgrade --cask frankhommers/tap/hermes-desktop
+```
+
+This is the standalone Electron desktop from
+[hermes-desktop-builds](https://github.com/frankhommers/hermes-desktop-builds),
+not the agent bootstrap installer. The cask selects Apple Silicon or Intel automatically.
+It does not install Python/an agent, remove quarantine or disable Gatekeeper.
+The current community preview is unsigned and not Apple-notarized.
+
+On a clean first run choose **Connect to existing Hermes**. An already installed
+local runtime can be discovered by the unchanged upstream app; review that before
+launching if local startup must be avoided. The in-app updater is not used here.
+
+The daily/manual **Sync Hermes Desktop cask** workflow consumes only a published
+crossplatform release manifest, validates/downloads/installs on both Mac architectures,
+and commits the cask only after those checks pass. No cross-repository PAT is needed.
+The installer checks do not prove Gatekeeper acceptance or remote-backend login on your Mac.
 
 ## Available Formulae
 
