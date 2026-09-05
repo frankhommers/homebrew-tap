@@ -96,6 +96,9 @@ jobs:
           echo "Updated $CASK_FILE:"
           cat "$CASK_FILE"
 
+      - name: Check cask DSL regressions before publishing
+        run: python3 -m unittest discover -s tests -v
+
       - name: Commit and push
         shell: bash
         run: |
