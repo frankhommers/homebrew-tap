@@ -18,7 +18,7 @@ cask "hermes-desktop" do
   desc "Standalone Hermes Electron Desktop for remote backends"
   homepage "https://github.com/frankhommers/hermes-desktop-builds"
 
-  depends_on macos: ">= :monterey"
+  depends_on macos: :monterey
 
   app "Hermes.app"
 

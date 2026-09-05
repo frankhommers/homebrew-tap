@@ -77,6 +77,9 @@ class SyncTests(unittest.TestCase):
 
     def test_render_uses_exact_adhoc_assets_for_both_architectures(self):
         text = sync.render(self.fixture())
+        dependency = next(line.strip() for line in text.splitlines() if line.strip().startswith('depends_on macos:'))
+        self.assertRegex(dependency, r'^depends_on macos: :[a-z][a-z0-9_]*$')
+        self.assertNotIn('verified:', text)
         self.assertIn('  version "0.17.0.2"', text)
         for arch, digest in [('arm64', '1' * 64), ('x64', '2' * 64)]:
             self.assertIn(f'/v#{{version}}/Hermes-#{{version}}-darwin-{arch}-adhoc.zip"', text)

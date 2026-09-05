@@ -1,6 +1,12 @@
 name: Sync Hermes Desktop cask
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - 'casks/hermes-desktop.rb'
+      - 'scripts/sync-hermes-desktop.py'
+      - 'tests/test_hermes_*.py'
+      - '.github/workflows/sync-hermes-desktop.yml'
   schedule:
     - cron: '19 6 * * *'
 permissions:
@@ -27,7 +33,7 @@ jobs:
           else
             printf 'changed=false\n' >> "$GITHUB_OUTPUT"
           fi
-      - if: steps.change.outputs.changed == 'true'
+      - if: steps.change.outputs.changed == 'true' || github.event_name == 'pull_request'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: hermes-cask
@@ -36,7 +42,7 @@ jobs:
           retention-days: 3
   validate:
     needs: prepare
-    if: needs.prepare.outputs.changed == 'true'
+    if: needs.prepare.outputs.changed == 'true' || github.event_name == 'pull_request'
     strategy:
       fail-fast: false
       matrix:
@@ -137,7 +143,7 @@ jobs:
           retention-days: 14
   publish:
     needs: [prepare, validate]
-    if: needs.prepare.outputs.changed == 'true'
+    if: needs.prepare.outputs.changed == 'true' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     permissions:
       contents: write
