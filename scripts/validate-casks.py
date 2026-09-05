@@ -27,7 +27,7 @@ def main():
         raise SystemExit("This installer verification requires a disposable macOS Actions runner")
     logs = Path(os.environ["RUNNER_TEMP"]) / "cask-validation"
     logs.mkdir(parents=True, exist_ok=True)
-    apps = logs / "apps"
+    apps = Path(os.environ["RUNNER_TEMP"]) / "cask-validation-apps"
     apps.mkdir(exist_ok=True)
 
     def run(label, *argv):
