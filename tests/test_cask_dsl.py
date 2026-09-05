@@ -29,7 +29,7 @@ class CaskDSLTests(unittest.TestCase):
                 block = re.search(r"(?ms)^  postflight_steps do\n(.*?)^  end$", text)
                 self.assertIsNotNone(block, "Use structured postflight_steps")
                 assert block is not None
-                body = block[1]
+                body = re.sub(r"(?<=:)[ \t]+", " ", block[1])
                 self.assertIn('run "/usr/bin/xattr",', body)
                 self.assertIn(f'args: ["-d", "com.apple.quarantine", "{{{{appdir}}}}/{app}"],', body)
                 self.assertIn("sudo: false", body)

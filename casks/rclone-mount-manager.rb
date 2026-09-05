@@ -15,19 +15,17 @@ cask "rclone-mount-manager" do
   end
 
   name "Rclone Mount Manager"
-  desc "Rclone mount manager with GUI"
+  desc "GUI for managing rclone mounts"
   homepage "https://github.com/frankhommers/rclone-mount-manager"
 
   app "Rclone Mount Manager.app"
 
   postflight_steps do
     run "/usr/bin/xattr",
-        args: ["-d", "com.apple.quarantine", "{{appdir}}/Rclone Mount Manager.app"],
-        sudo: false,
+        args:         ["-d", "com.apple.quarantine", "{{appdir}}/Rclone Mount Manager.app"],
+        sudo:         false,
         must_succeed: true
   end
 
-  zap trash: [
-    "~/.config/rclone-mount-manager",
-  ]
+  zap trash: "~/.config/rclone-mount-manager"
 end

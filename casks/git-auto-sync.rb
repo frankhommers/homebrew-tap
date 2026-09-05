@@ -22,8 +22,8 @@ cask "git-auto-sync" do
 
   postflight_steps do
     run "/usr/bin/xattr",
-        args: ["-d", "com.apple.quarantine", "{{appdir}}/Git Auto Sync.app"],
-        sudo: false,
+        args:         ["-d", "com.apple.quarantine", "{{appdir}}/Git Auto Sync.app"],
+        sudo:         false,
         must_succeed: true
   end
 
