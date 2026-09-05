@@ -1,17 +1,17 @@
 # frozen_string_literal: true
 
 cask "hermes-desktop" do
-  version "0.17.0.1"
+  version "0.17.0.2"
 
   on_arm do
-    sha256 "2205043b0136aad5040ed2a62358c6b02af97206bb41748dd4802fd4c274a0ec"
+    sha256 "fed28fc30910373c05fc87df6b4657c405837377e2411c2c68d071a297046db4"
 
-    url "https://github.com/frankhommers/hermes-desktop-builds/releases/download/v#{version}/Hermes-#{version}-darwin-arm64-unsigned.zip"
+    url "https://github.com/frankhommers/hermes-desktop-builds/releases/download/v#{version}/Hermes-#{version}-darwin-arm64-adhoc.zip"
   end
   on_intel do
-    sha256 "de6b339c64c7cac81059df03b65f5abdcc90f27c26bc03680571e614fcedc07a"
+    sha256 "cee670ec2ca2262bd7b89d5be119fa450b39c1801a61e2281cfcbee256c59988"
 
-    url "https://github.com/frankhommers/hermes-desktop-builds/releases/download/v#{version}/Hermes-#{version}-darwin-x64-unsigned.zip"
+    url "https://github.com/frankhommers/hermes-desktop-builds/releases/download/v#{version}/Hermes-#{version}-darwin-x64-adhoc.zip"
   end
 
   name "Hermes Desktop"
@@ -23,7 +23,8 @@ cask "hermes-desktop" do
   app "Hermes.app"
 
   caveats <<~EOS
-    Unsigned community build; not Apple-notarized. Gatekeeper remains enabled.
+    Ad-hoc signed community build; no Developer ID or Apple notarization.
+    Gatekeeper remains enabled; app-specific approval may be required.
     Choose "Connect to existing Hermes", not "Install Hermes locally".
     An existing local Hermes runtime may be discovered and started by upstream.
     Review existing installations before launching if local startup must be avoided.
