@@ -1,5 +1,7 @@
 import copy
 import importlib.util
+import hashlib
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -68,6 +70,236 @@ class SyncTests(unittest.TestCase):
             'sys.argv', ['sync-hermes-desktop.py', '--version', manifest['version'], '--output', str(output)]
         ):
             sync.main()
+
+    def patched_fixture(self):
+        manifest = self.fixture()
+        manifest['version'] = '0.17.0.3'
+        manifest['upstream'] = {'commit': 'a' * 40}
+        # Inert test bytes, never an executable patch or a release artifact.
+        patch = b'metadata-only patch fixture\n'
+        rows = [{'file': 'remote-client-ui.patch', 'sha256': hashlib.sha256(patch).hexdigest()}]
+        raw = (json.dumps({'schema': 1, 'patches': rows}, indent=2) + '\n').encode()
+        receipt = {'schema': 1, 'verified': True, 'upstreamCommit': 'a' * 40,
+                   'upstreamTree': 'b' * 40, 'patchedTree': 'c' * 40,
+                   'manifestSha256': hashlib.sha256(raw).hexdigest(), 'patches': rows}
+        manifest['sourcePatch'] = receipt
+        for label, target in manifest['targets'].items():
+            target['archive'] = target['archive'].replace('0.17.0.2', '0.17.0.3')
+            target.update(sourceClean=False, sourceVerified=True, sourcePatch=copy.deepcopy(receipt))
+            target['nativeSmoke'].update(firstRun=True, remoteForm=True, noAgentCheckout=True,
+                                        unreachableRemoteBlocksApply=True, localInstallStarted=False,
+                                        remoteSetupDirect=True, localInstallOfferAbsent=True)
+            target['targetedSuite'] = {'releaseGatePassed': True}
+            if label == 'linux-x64':
+                target['fullSuite'] = {'releaseGatePassed': True}
+        return manifest, {'source-patches.json': raw, 'remote-client-ui.patch': patch}
+
+    def patched_release(self, manifest, files):
+        files = dict(files)
+        files['release-manifest.json'] = (json.dumps(manifest) + '\n').encode()
+        hashes = {t['archive']: t['sha256'] for t in manifest['targets'].values()}
+        hashes.update({name: hashlib.sha256(raw).hexdigest() for name, raw in files.items()
+                       if name != 'release-manifest.json'})
+        files['SHA256SUMS'] = ''.join(f'{sha}  {name}\n' for name, sha in hashes.items()).encode()
+        hashes.update({name: hashlib.sha256(raw).hexdigest() for name, raw in files.items()})
+        base = f'https://github.com/{sync.REPO}/releases/download/v{manifest["version"]}'
+        release = {'tag_name': 'v' + manifest['version'], 'draft': False,
+                   'assets': [{'name': n, 'browser_download_url': f'{base}/{n}', 'digest': 'sha256:' + sha}
+                              for n, sha in hashes.items()]}
+        return release, {f'{base}/{name}': raw for name, raw in files.items()}
+
+    def run_patched(self, output, manifest, release, downloads):
+        with mock.patch.object(sync, 'get_bytes', side_effect=lambda url: downloads[url], create=True):
+            self.run_sync(output, manifest, release)
+
+    def assert_patched_rejected(self, manifest, files, mutate_release=None):
+        release, downloads = self.patched_release(manifest, files)
+        if mutate_release:
+            mutate_release(release, downloads)
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / 'hermes-desktop.rb'
+            old = sync.render(self.fixture()).encode()
+            output.write_bytes(old)
+            with self.assertRaises(ValueError):
+                self.run_patched(output, manifest, release, downloads)
+            self.assertEqual(output.read_bytes(), old)
+
+    def test_verified_patch_renders_only_new_guidance_and_syncs_idempotently(self):
+        manifest, files = self.patched_fixture()
+        expected = sync.render(self.fixture()).replace('0.17.0.2', '0.17.0.3').replace(
+            '    Choose "Connect to existing Hermes", not "Install Hermes locally".',
+            '    First start connects to an existing Hermes server; local installation UI is hidden.')
+        self.assertEqual(sync.render(manifest), expected)
+        release, downloads = self.patched_release(manifest, files)
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / 'hermes-desktop.rb'
+            self.run_patched(output, manifest, release, downloads)
+            self.assertEqual(output.read_bytes(), expected.encode())
+            self.run_patched(output, manifest, release, downloads)
+
+    def test_patch_receipt_fields_are_required_and_strict(self):
+        receipt = self.patched_fixture()[0]['sourcePatch']
+        cases = [(key, None) for key in receipt]
+        cases += [('schema', v) for v in (True, 1.0, '1', 2)]
+        cases += [('verified', v) for v in (False, 1, 'true')]
+        for key in ('upstreamCommit', 'upstreamTree', 'patchedTree'):
+            cases += [(key, v) for v in ('0' * 40, 'A' * 40, 'a' * 39, 'a' * 40 + '\n', True)]
+        cases += [('manifestSha256', v) for v in ('A' * 64, 'a' * 63, True)]
+        cases += [('patches', v) for v in ([], {}, None)]
+        for key, invalid in cases:
+            with self.subTest(field=key, value=invalid):
+                manifest, files = self.patched_fixture()
+                if invalid is None:
+                    del manifest['sourcePatch'][key]
+                else:
+                    manifest['sourcePatch'][key] = invalid
+                for target in manifest['targets'].values():
+                    target['sourcePatch'] = copy.deepcopy(manifest['sourcePatch'])
+                self.assert_patched_rejected(manifest, files)
+        for invalid in (None, False, [], 'verified'):
+            manifest, files = self.patched_fixture()
+            manifest['sourcePatch'] = invalid
+            self.assert_patched_rejected(manifest, files)
+
+    def test_patch_identity_and_all_target_receipts_must_agree(self):
+        mutations = [lambda m: m.pop('sourcePatch'),
+                     lambda m: m['upstream'].update(commit='d' * 40),
+                     lambda m: m['sourcePatch'].update(patchedTree='b' * 40)]
+        for label in self.fixture()['targets']:
+            mutations.extend([lambda m, l=label: m['targets'].pop(l),
+                              lambda m, l=label: m['targets'][l].pop('sourcePatch'),
+                              lambda m, l=label: m['targets'][l]['sourcePatch'].update(schema=True),
+                              lambda m, l=label: m['targets'][l]['sourcePatch']['patches'][0].update(sha256='d' * 64)])
+        for mutation in mutations:
+            manifest, files = self.patched_fixture()
+            mutation(manifest)
+            self.assert_patched_rejected(manifest, files)
+
+    def test_patched_gates_require_literal_booleans_on_every_target(self):
+        groups = {None: {'sourceClean': False, 'sourceVerified': True, 'archiveRoundtrip': True},
+                  'nativeSmoke': {'firstRun': True, 'remoteForm': True, 'noAgentCheckout': True,
+                                  'unreachableRemoteBlocksApply': True, 'localInstallStarted': False,
+                                  'remoteSetupDirect': True, 'localInstallOfferAbsent': True},
+                  'targetedSuite': {'releaseGatePassed': True}, 'fullSuite': {'releaseGatePassed': True}}
+        for label in self.fixture()['targets']:
+            for group, fields in groups.items():
+                if group == 'fullSuite' and label != 'linux-x64':
+                    continue
+                for field, expected in fields.items():
+                    for invalid in (None, not expected, int(expected), str(expected).lower(), [], {}):
+                        with self.subTest(target=label, group=group, field=field, invalid=invalid):
+                            manifest, files = self.patched_fixture()
+                            target = manifest['targets'][label]
+                            obj = target if group is None else target[group]
+                            if invalid is None:
+                                del obj[field]
+                            else:
+                                obj[field] = invalid
+                            self.assert_patched_rejected(manifest, files)
+
+    def test_patched_native_target_and_error_fields_are_exact(self):
+        for label in self.fixture()['targets']:
+            for field, invalid in [('platform', 'other'), ('arch', 'other'), ('errors', False),
+                                   ('errors', {}), ('errors', ['failure'])]:
+                manifest, files = self.patched_fixture()
+                manifest['targets'][label]['nativeSmoke'][field] = invalid
+                self.assert_patched_rejected(manifest, files)
+            for group in ('nativeSmoke', 'targetedSuite'):
+                manifest, files = self.patched_fixture()
+                del manifest['targets'][label][group]
+                self.assert_patched_rejected(manifest, files)
+
+    def test_patched_receipts_do_not_relax_signing_or_gatekeeper(self):
+        for label in ('darwin-arm64', 'darwin-x64'):
+            for group, field, invalid in [(None, 'bundleVerified', False), (None, 'tamperRejected', 1),
+                                          (None, 'missingSealRejected', False),
+                                          ('gatekeeper', 'enabled', False), ('gatekeeper', 'accepted', True)]:
+                manifest, files = self.patched_fixture()
+                signing = manifest['targets'][label]['macSigning']
+                (signing if group is None else signing[group])[field] = invalid
+                self.assert_patched_rejected(manifest, files)
+
+    def test_patch_names_and_digests_are_not_arbitrary_paths(self):
+        for name in ('../remote-client-ui.patch', '/tmp/a.patch', 'https://evil/a.patch',
+                     'remote-client-ui.patch\n', 'a.patch?raw=1', 'a.patch#x', 'A.patch'):
+            manifest, files = self.patched_fixture()
+            manifest['sourcePatch']['patches'][0]['file'] = name
+            for target in manifest['targets'].values():
+                target['sourcePatch'] = copy.deepcopy(manifest['sourcePatch'])
+            self.assert_patched_rejected(manifest, files)
+        for row in ({'file': 'remote-client-ui.patch', 'sha256': True},
+                    {'file': 'remote-client-ui.patch'}, {'file': 'a.patch', 'sha256': 'f' * 64, 'extra': True}):
+            manifest, files = self.patched_fixture()
+            manifest['sourcePatch']['patches'] = [row]
+            self.assert_patched_rejected(manifest, files)
+        manifest, files = self.patched_fixture()
+        manifest['sourcePatch']['patches'] *= 2
+        self.assert_patched_rejected(manifest, files)
+
+    def test_public_patch_bytes_and_original_manifest_bytes_are_verified(self):
+        for name in ('source-patches.json', 'remote-client-ui.patch'):
+            manifest, files = self.patched_fixture()
+            files[name] += b'\n'
+            self.assert_patched_rejected(manifest, files)
+        # Self-consistent byte hash must not excuse a different public patch list.
+        manifest, files = self.patched_fixture()
+        files['source-patches.json'] = json.dumps({'schema': 1, 'patches': []}).encode()
+        manifest['sourcePatch']['manifestSha256'] = hashlib.sha256(files['source-patches.json']).hexdigest()
+        for target in manifest['targets'].values():
+            target['sourcePatch'] = copy.deepcopy(manifest['sourcePatch'])
+        self.assert_patched_rejected(manifest, files)
+
+    def test_patched_public_assets_require_exact_urls_names_and_digests(self):
+        manifest, files = self.patched_fixture()
+        release, _ = self.patched_release(manifest, files)
+        for name in [a['name'] for a in release['assets']]:
+            for field, value in [('name', 'wrong-' + name), ('digest', None), ('digest', 'sha256:' + 'f' * 64),
+                                 ('browser_download_url', f'https://github.com/evil/repo/releases/download/v0.17.0.3/{name}'),
+                                 ('browser_download_url', f'https://github.com/{sync.REPO}/releases/download/v0.17.0.2/{name}')]:
+                with self.subTest(asset=name, field=field, value=value):
+                    def mutate(r, d, name=name, field=field, value=value):
+                        a = next(a for a in r['assets'] if a['name'] == name)
+                        if value is None:
+                            del a[field]
+                        else:
+                            a[field] = value
+                    self.assert_patched_rejected(manifest, files, mutate)
+            self.assert_patched_rejected(manifest, files,
+                lambda r, d, n=name: r['assets'].append(copy.deepcopy(next(a for a in r['assets'] if a['name'] == n))))
+
+    def test_sha256sums_must_include_exact_patch_hashes(self):
+        manifest, files = self.patched_fixture()
+        for name in files:
+            def mutate(release, downloads, name=name):
+                url = next(u for u in downloads if u.endswith('/SHA256SUMS'))
+                raw = b''.join(line for line in downloads[url].splitlines(keepends=True)
+                               if not line.endswith(('  ' + name + '\n').encode()))
+                downloads[url] = raw
+                next(a for a in release['assets'] if a['name'] == 'SHA256SUMS')['digest'] = 'sha256:' + hashlib.sha256(raw).hexdigest()
+            self.assert_patched_rejected(manifest, files, mutate)
+
+    def test_legacy_assets_keep_optional_digest_but_reject_wrong_metadata(self):
+        manifest = self.fixture()
+        for field, invalid in [('digest', 'sha256:' + 'f' * 64),
+                               ('browser_download_url', 'https://evil.example/Hermes.zip')]:
+            release = self.release(manifest)
+            release['assets'][1][field] = invalid
+            with tempfile.TemporaryDirectory() as directory:
+                output = Path(directory) / 'hermes-desktop.rb'
+                with self.assertRaises(ValueError):
+                    self.run_sync(output, manifest, release)
+                self.assertFalse(output.exists())
+
+    def test_exact_requested_tag_and_manifest_asset_name_are_required(self):
+        manifest = self.fixture()
+        for mutate in (lambda r: r.update(tag_name='x0.17.0.2'),
+                       lambda r: r.update(tag_name='v0.17.0.3'),
+                       lambda r: r['assets'][0].update(name='other.json')):
+            release = self.release(manifest)
+            mutate(release)
+            with tempfile.TemporaryDirectory() as directory:
+                with self.assertRaises(ValueError):
+                    self.run_sync(Path(directory) / 'hermes-desktop.rb', manifest, release)
 
     def test_cask_has_no_security_or_agent_hooks(self):
         text = sync.render(self.fixture())
