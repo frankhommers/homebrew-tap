@@ -36,9 +36,12 @@ def render(manifest):
         if not m['sourceClean'] or not m['archiveRoundtrip']:raise ValueError('Incomplete validation')
         blocks.append(f'''  {condition} do
     sha256 "{m['sha256']}"
+
     url "https://github.com/{REPO}/releases/download/v#{{version}}/Hermes-#{{version}}-darwin-{arch}-unsigned.zip"
   end''')
-    return f'''cask "hermes-desktop" do
+    return f'''# frozen_string_literal: true
+
+cask "hermes-desktop" do
   version "{version}"
 
 {chr(10).join(blocks)}
@@ -48,6 +51,7 @@ def render(manifest):
   homepage "https://github.com/{REPO}"
 
   depends_on macos: ">= :monterey"
+
   app "Hermes.app"
 
   caveats <<~EOS
