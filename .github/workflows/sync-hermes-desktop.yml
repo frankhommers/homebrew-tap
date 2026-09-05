@@ -1,0 +1,104 @@
+name: Sync Hermes Desktop cask
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '19 6 * * *'
+permissions:
+  contents: read
+concurrency:
+  group: sync-hermes-desktop
+  cancel-in-progress: false
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    outputs:
+      changed: ${{ steps.change.outputs.changed }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: python3 -m unittest discover -s tests -v
+      - run: python3 scripts/sync-hermes-desktop.py
+      - id: change
+        shell: bash
+        run: |
+          if test -n "$(git status --porcelain -- casks/hermes-desktop.rb)"; then
+            printf 'changed=true\n' >> "$GITHUB_OUTPUT"
+          else
+            printf 'changed=false\n' >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.change.outputs.changed == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: hermes-cask
+          path: casks/hermes-desktop.rb
+          if-no-files-found: error
+          retention-days: 3
+  validate:
+    needs: prepare
+    if: needs.prepare.outputs.changed == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, macos-15-intel]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: '1'
+      HOMEBREW_NO_ANALYTICS: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: hermes-cask
+          path: casks
+      - name: Parse, audit, download with SHA256 and install the actual cask
+        shell: bash
+        run: |
+          brew tap frankhommers/tap "$GITHUB_WORKSPACE"
+          install -m 644 casks/hermes-desktop.rb "$(brew --repository frankhommers/tap)/casks/hermes-desktop.rb"
+          brew style --cask frankhommers/tap/hermes-desktop
+          brew audit --cask frankhommers/tap/hermes-desktop
+          brew fetch --cask frankhommers/tap/hermes-desktop
+          mkdir -p "$RUNNER_TEMP/hermes-cask-apps"
+          brew install --cask --appdir="$RUNNER_TEMP/hermes-cask-apps" frankhommers/tap/hermes-desktop
+          test -x "$RUNNER_TEMP/hermes-cask-apps/Hermes.app/Contents/MacOS/Hermes"
+          file "$RUNNER_TEMP/hermes-cask-apps/Hermes.app/Contents/MacOS/Hermes"
+          brew info --json=v2 --cask frankhommers/tap/hermes-desktop
+  publish:
+    needs: [prepare, validate]
+    if: needs.prepare.outputs.changed == 'true'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: hermes-cask
+          path: casks
+      - name: Refuse downgrade or changes to an immutable version
+        shell: python
+        run: |
+          import pathlib, re, subprocess
+          p='casks/hermes-desktop.rb'
+          previous=subprocess.run(['git','show','HEAD:'+p],capture_output=True,text=True)
+          new=pathlib.Path(p).read_text()
+          def version(s):
+              return tuple(map(int,re.search(r'^  version "([0-9.]+)"$',s,re.M)[1].split('.')))
+          if previous.returncode==0:
+              old=previous.stdout
+              assert version(new)>=version(old), 'Refusing downgrade'
+              assert version(new)!=version(old) or new==old, 'Immutable version changed'
+      - name: Commit only the tested cask
+        shell: bash
+        run: |
+          git diff --check
+          git add casks/hermes-desktop.rb
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'chore: update verified Hermes Desktop cask'
+          git push
