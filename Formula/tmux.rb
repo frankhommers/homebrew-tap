@@ -43,6 +43,9 @@ class Tmux < Formula
     depends_on "jemalloc"
   end
 
+  # runs a server as a test
+  allow_network_access! :test
+
   def install
 
     if OS.mac?
