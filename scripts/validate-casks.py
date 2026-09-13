@@ -15,11 +15,22 @@ import shutil
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
+TAP = "frankhommers/tap"
 APPS = {
     "git-auto-sync": "Git Auto Sync.app",
     "mcp-manager": "MCP Manager.app",
     "rclone-mount-manager": "Rclone Mount Manager.app",
 }
+
+
+def require_tap_trusted(raw):
+    try:
+        state = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError("Homebrew returned invalid tap-trust JSON") from exc
+    taps = state.get("taps") if isinstance(state, dict) else None
+    if not isinstance(taps, list) or TAP not in taps:
+        raise RuntimeError(f"Homebrew did not record explicit trust for {TAP}")
 
 
 def main():
@@ -46,12 +57,17 @@ def main():
         return result.stdout
 
     run("brew-version", "brew", "--version")
-    run("tap", "brew", "tap", "frankhommers/tap", str(ROOT))
-    tap = Path(run("tap-path", "brew", "--repository", "frankhommers/tap").strip())
+    run("trust-tap", "brew", "trust", TAP)
+    require_tap_trusted(run("trust-before-tap", "brew", "trust", "--json=v1"))
+    # Use Homebrew's canonical GitHub remote for the trusted tap. A temporary
+    # local checkout is a custom remote and invalidates name-bound tap trust.
+    run("tap", "brew", "tap", TAP)
+    require_tap_trusted(run("trust-after-tap", "brew", "trust", "--json=v1"))
+    tap = Path(run("tap-path", "brew", "--repository", TAP).strip())
     # Explicitly use the PR bytes even if brew tap chose a default-branch clone.
     for source in sorted((ROOT / "casks").glob("*.rb")):
         shutil.copyfile(source, tap / "casks" / source.name)
-    tokens = [f"frankhommers/tap/{p.stem}" for p in sorted((ROOT / "casks").glob("*.rb"))]
+    tokens = [f"{TAP}/{p.stem}" for p in sorted((ROOT / "casks").glob("*.rb"))]
     info = json.loads(run("info", "brew", "info", "--json=v2", "--cask", *tokens))
     if {cask["token"] for cask in info["casks"]} != {p.stem for p in (ROOT / "casks").glob("*.rb")}:
         raise RuntimeError("Homebrew did not parse every checked-in cask")
@@ -60,7 +76,7 @@ def main():
 
     verified = []
     for token, bundle in APPS.items():
-        name = f"frankhommers/tap/{token}"
+        name = f"{TAP}/{token}"
         run(f"{token}-fetch", "brew", "fetch", "--cask", name)
         run(f"{token}-install", "brew", "install", "--cask", f"--appdir={apps}", name)
         app = apps / bundle
