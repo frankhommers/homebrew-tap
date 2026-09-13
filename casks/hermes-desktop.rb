@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
 cask "hermes-desktop" do
-  version "0.17.0.3"
+  version "0.17.2.1"
 
   on_arm do
-    sha256 "e2bbc944eb6cff431a528d4f0b6e2735d9445f25725ced59b03fd3a726be81aa"
+    sha256 "f67238a6664afc06579868aec79e01b1a85ff3d17a79b3523d776f9b06b1c062"
 
     url "https://github.com/frankhommers/hermes-desktop-builds/releases/download/v#{version}/Hermes-#{version}-darwin-arm64-adhoc.zip"
   end
   on_intel do
-    sha256 "6459527f09c36be01322443e2d4fcc2e82801ff7de1c0a7d7343a4400d0d842d"
+    sha256 "8bd576d88077a58a3b372948b365f6a2f5b36f7b2ab0addd7aa8b189286eb78a"
 
     url "https://github.com/frankhommers/hermes-desktop-builds/releases/download/v#{version}/Hermes-#{version}-darwin-x64-adhoc.zip"
   end
