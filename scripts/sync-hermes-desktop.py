@@ -202,6 +202,14 @@ def render(manifest):
     targets=manifest['targets']
     guidance=('First start connects to an existing Hermes server; local installation UI is hidden.' if patched
               else 'Choose "Connect to existing Hermes", not "Install Hermes locally".')
+    patch_files={row['file'] for row in manifest['sourcePatch']['patches']} if patched else set()
+    update_guidance=('''No Python agent is installed by this cask.
+    The first upgrade from before 0.17.2.1 must run with:
+      brew upgrade --cask frankhommers/tap/hermes-desktop
+    This build can apply later Desktop updates in-app through Homebrew.
+    Remote backends are never updated by the Desktop updater.'''
+                     if 'homebrew-client-updater.patch' in patch_files
+                     else 'No Python agent is installed by this cask. Updates use brew upgrade, not the in-app updater.')
     blocks=[]
     for arch,condition in [('arm64','on_arm'),('x64','on_intel')]:
         m=targets['darwin-'+arch]
@@ -235,7 +243,7 @@ cask "hermes-desktop" do
     {guidance}
     An existing local Hermes runtime may be discovered and started by upstream.
     Review existing installations before launching if local startup must be avoided.
-    No Python agent is installed by this cask. Updates use brew upgrade, not the in-app updater.
+    {update_guidance}
   EOS
 end
 '''

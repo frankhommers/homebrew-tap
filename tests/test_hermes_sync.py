@@ -365,6 +365,22 @@ class SyncTests(unittest.TestCase):
     No Python agent is installed by this cask. Updates use brew upgrade, not the in-app updater.
 ''')
 
+    def test_in_app_update_caveat_requires_the_verified_updater_patch(self):
+        manifest, _ = self.patched_fixture()
+        self.assertIn('Updates use brew upgrade, not the in-app updater.', sync.render(manifest))
+        manifest['sourcePatch']['patches'].append({
+            'file': 'homebrew-client-updater.patch',
+            'sha256': 'e' * 64,
+        })
+        for target in manifest['targets'].values():
+            target['sourcePatch'] = copy.deepcopy(manifest['sourcePatch'])
+        caveats = sync.render(manifest).split('  caveats <<~EOS\n')[1].split('  EOS')[0]
+        self.assertIn('The first upgrade from before 0.17.2.1 must run with:', caveats)
+        self.assertIn('brew upgrade --cask frankhommers/tap/hermes-desktop', caveats)
+        self.assertIn('This build can apply later Desktop updates in-app through Homebrew.', caveats)
+        self.assertIn('Remote backends are never updated by the Desktop updater.', caveats)
+        self.assertNotIn('not the in-app updater', caveats)
+
     def test_missing_or_mismatched_build_blocks(self):
         mutations = [
             lambda m: m['targets'].pop('linux-x64'),
