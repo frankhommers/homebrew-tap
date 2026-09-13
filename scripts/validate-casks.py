@@ -59,7 +59,9 @@ def main():
     run("brew-version", "brew", "--version")
     run("trust-tap", "brew", "trust", TAP)
     require_tap_trusted(run("trust-before-tap", "brew", "trust", "--json=v1"))
-    run("tap", "brew", "tap", TAP, str(ROOT))
+    # Use Homebrew's canonical GitHub remote for the trusted tap. A temporary
+    # local checkout is a custom remote and invalidates name-bound tap trust.
+    run("tap", "brew", "tap", TAP)
     require_tap_trusted(run("trust-after-tap", "brew", "trust", "--json=v1"))
     tap = Path(run("tap-path", "brew", "--repository", TAP).strip())
     # Explicitly use the PR bytes even if brew tap chose a default-branch clone.

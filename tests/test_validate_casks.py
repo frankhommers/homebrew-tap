@@ -23,6 +23,8 @@ class ValidateCasksTrustTests(unittest.TestCase):
         self.assertLess(trust_position, tap_position)
         self.assertIn('run("trust-before-tap"', source)
         self.assertIn('run("trust-after-tap"', source)
+        self.assertIn('run("tap", "brew", "tap", TAP)', source)
+        self.assertNotIn('run("tap", "brew", "tap", TAP, str(ROOT))', source)
         self.assertNotIn("HOMEBREW_NO_REQUIRE_TAP_TRUST", source)
 
 
