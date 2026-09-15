@@ -13,6 +13,7 @@ brew tap frankhommers/tap
 | Cask | Description | Install |
 |------|-------------|---------|
 | hermes-desktop | Standalone Hermes Electron Desktop, unsigned community preview | `brew install --cask frankhommers/tap/hermes-desktop` |
+| hermes-desktop-mainstream | One-time migration to the official Hermes in-app updater (Apple Silicon) | `brew install --cask frankhommers/tap/hermes-desktop-mainstream` |
 | mcp-manager | MCP server management with multi-target export | `brew install --cask frankhommers/tap/mcp-manager` |
 | git-auto-sync | Git repository auto-sync with GUI and daemon | `brew install --cask frankhommers/tap/git-auto-sync` |
 | rclone-mount-manager | Rclone mount manager with GUI | `brew install --cask frankhommers/tap/rclone-mount-manager` |
@@ -40,6 +41,38 @@ The daily/manual **Sync Hermes Desktop cask** workflow consumes only a published
 crossplatform release manifest, validates/downloads/installs on both Mac architectures,
 and commits the cask only after those checks pass. No cross-repository PAT is needed.
 The installer checks do not prove Gatekeeper acceptance or remote-backend login on your Mac.
+
+### Hermes Desktop: Homebrew once, official updates afterwards
+
+For an existing Apple Silicon Hermes client on macOS Sequoia or newer:
+
+```bash
+brew install --cask frankhommers/tap/hermes-desktop-mainstream
+```
+
+Save and authenticate your server as the machine-global Remote connection and
+registry primary, select Primary gateway startup, close local session/Bot tiles,
+then quit Hermes before running it. This command performs the installation;
+there is no second manual installer command. It installs Python/Node and builds
+the unmodified official source/client. Later updates use **Hermes's official
+in-app updater**, not Homebrew. It does not start an agent or register services.
+
+The legacy `hermes-desktop` cask is pinned so Homebrew will not overwrite the
+handed-over client. Keep it pinned and do not reinstall it. The old app and
+private settings backups are retained. Existing conflicting source installations,
+services or unsafe saved routing cause a refusal rather than deletion. This is
+an existing-client migration, not fresh-account onboarding.
+
+Keep the bootstrap cask and its Python/Node dependencies installed, plus
+`~/.hermes/hermes-agent`. Its uninstall hook does not delete Hermes.app or user
+data, but Homebrew autoremove can remove dependencies; uninstalling the **legacy**
+cask still removes its registered Hermes.app. No permanent alternate updater,
+source patch or hard local-OFF policy is installed. Deliberate local use or lost
+connection settings can start a local agent.
+
+Ad-hoc signing is not Apple notarization. CI uses synthetic remote fixtures;
+personal-account OAuth/chat, sleep/reconnect and personal-Mac Gatekeeper approval
+remain client-specific checks. See the [installer documentation and native receipts](https://github.com/frankhommers/hermes-desktop-builds/tree/main/mainstream).
 
 ### Cask maintenance
 
