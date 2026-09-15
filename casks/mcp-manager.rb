@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
 cask "mcp-manager" do
-  version "1.10.0"
+  version "1.11.0"
 
   on_arm do
-    sha256 "bd65d9763fe9ecc44b9a3f41bc57e274118b56130754d507e42b0e16a9075798"
+    sha256 "a22f9b601333c3dd8b08744f86bcba29d12a755be77f15aeee5c51a4bd4fc0bf"
 
     url "https://github.com/frankhommers/mcp-manager/releases/download/v#{version}/McpManager-v#{version}-osx-arm64.dmg"
   end
   on_intel do
-    sha256 "1cb1c9003f212a123c7ed90739e91ae65db131c75070819a02b2c43b65080e07"
+    sha256 "ae5390fc1976564da9d4ab8258a4be007daab03c63be9a74c6edddc2a630d5b7"
 
     url "https://github.com/frankhommers/mcp-manager/releases/download/v#{version}/McpManager-v#{version}-osx-x64.dmg"
   end
