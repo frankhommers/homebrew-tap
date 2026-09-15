@@ -93,7 +93,20 @@ def main():
             raise RuntimeError("Migrated postflight did not preserve the existing root-attribute removal")
         verified.append({"token": token, "app": str(app), "executable": str(executable),
                          "architecture": platform.machine(), "rootQuarantineRemoved": True})
-    report = {"parsedCasks": sorted(c["token"] for c in info["casks"]), "installed": verified}
+    bootstrap = next((c for c in info['casks'] if c['token'] == 'hermes-desktop-mainstream'), None)
+    if bootstrap is not None:
+        if bootstrap.get('auto_updates') is not True or bootstrap.get('skip_livecheck') is not True:
+            raise RuntimeError('Bootstrap must not provide a permanent Homebrew update channel')
+        artifacts = bootstrap.get('artifacts', [])
+        if {key for item in artifacts for key in item} != {'installer', 'uninstall'}:
+            raise RuntimeError('Bootstrap must not own an app artifact')
+        # The actual installation/update lifecycle is exercised in the builds
+        # repository. Fetch the public release here to bind that exact SHA256
+        # payload to the final tap URL, rather than only validating the DSL.
+        if platform.machine() == 'arm64':
+            run('mainstream-fetch', 'brew', 'fetch', '--cask', f'{TAP}/hermes-desktop-mainstream')
+    report = {"parsedCasks": sorted(c["token"] for c in info["casks"]), "installed": verified,
+              "mainstreamPublicPayloadFetched": bootstrap is not None and platform.machine() == 'arm64'}
     (logs / "verification.json").write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps(report, indent=2))
 

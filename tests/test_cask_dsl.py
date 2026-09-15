@@ -48,8 +48,15 @@ class CaskDSLTests(unittest.TestCase):
             with self.subTest(cask=path.stem):
                 text = path.read_text()
                 self.assertRegex(text, r'(?m)^  version "[0-9]+(?:\.[0-9]+)+"$')
-                self.assertEqual(len(re.findall(r'(?m)^    sha256 "[0-9a-f]{64}"$', text)), 2)
-                self.assertEqual(len(re.findall(r'(?m)^    url "https://github\.com/frankhommers/', text)), 2)
+                if path.stem == "hermes-desktop-mainstream":
+                    self.assertEqual(len(re.findall(r'(?m)^  sha256 "[0-9a-f]{64}"$', text)), 1)
+                    self.assertEqual(len(re.findall(r'(?m)^  url "https://github\.com/frankhommers/', text)), 1)
+                    self.assertIn('depends_on arch: :arm64', text)
+                    self.assertIn('auto_updates true', text)
+                    self.assertNotIn('app "Hermes.app"', text)
+                else:
+                    self.assertEqual(len(re.findall(r'(?m)^    sha256 "[0-9a-f]{64}"$', text)), 2)
+                    self.assertEqual(len(re.findall(r'(?m)^    url "https://github\.com/frankhommers/', text)), 2)
 
 
 if __name__ == "__main__":
