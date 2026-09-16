@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 cask "hermes-desktop-mainstream" do
-  version "1.0.0"
-  sha256 "a6295fb79512d6fafa0e1c5b0225bf59c1222382cd93b4fe40688cbcd8dd5f5f"
+  version "1.0.1"
+  sha256 "b46910ec0653759713471d1f3ba3342d092037618db504da5461b66e449f5b2b"
 
   url "https://github.com/frankhommers/hermes-desktop-builds/releases/download/mainstream-v#{version}/Hermes-mainstream-#{version}.zip"
   name "Hermes Desktop Mainstream"
