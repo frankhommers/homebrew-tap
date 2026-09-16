@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 cask "hermes-desktop-mainstream" do
-  version "1.0.1"
-  sha256 "b46910ec0653759713471d1f3ba3342d092037618db504da5461b66e449f5b2b"
+  version "1.0.2"
+  sha256 "c35057444a884f44ce1ee1d68093d6c3ec1e7ce7b490f5aeb6e816618b9368a7"
 
   url "https://github.com/frankhommers/hermes-desktop-builds/releases/download/mainstream-v#{version}/Hermes-mainstream-#{version}.zip"
   name "Hermes Desktop Mainstream"
@@ -34,7 +34,8 @@ cask "hermes-desktop-mainstream" do
     Builds unmodified official source locally; installs Python/Node prerequisites.
     No local agent autostart, service registration or automatic app launch.
     Existing sources/services or unsafe saved routing cause a refusal, not deletion.
-    The old app and private user-data backups are retained.
+    The old app is retained in a private .noindex backup, not beside Hermes.app.
+    User-data backups are retained; launcher-specific caches may need refreshing.
     An installed frankhommers/tap/hermes-desktop cask is pinned, not uninstalled.
     Keep it pinned: future app updates belong to the official in-app updater.
     Its uninstall still removes Hermes.app; this bootstrap's uninstall removes only its receipt.
