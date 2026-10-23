@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
 cask "rclone-mount-manager" do
-  version "1.0.7"
+  version "1.0.8"
 
   on_arm do
-    sha256 "f6552e4a8dd6a1d2f73b012b20b1c46cc5e16f2f1b3b28f8b1bc4a6225cbf336"
+    sha256 "683ff6c207ee292de65223e8e89626ac64739e881123a5bd073afd908acba957"
 
     url "https://github.com/frankhommers/rclone-mount-manager/releases/download/v#{version}/RcloneMountManager-v#{version}-osx-arm64.dmg"
   end
   on_intel do
-    sha256 "f256cd62bed47166f438b578e27afe32044e6ee562e3e31f6e04355f538ef8ac"
+    sha256 "331346cab7fde3bf0e4c7360243a891e5fe2b80b53e28ef29376b4eae43ec3bd"
 
     url "https://github.com/frankhommers/rclone-mount-manager/releases/download/v#{version}/RcloneMountManager-v#{version}-osx-x64.dmg"
   end
